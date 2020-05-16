@@ -1,0 +1,37 @@
+var -> or_expr
+		| 'var' ID '=' or_expr
+		| 'var' ID '=' var
+
+or_expr -> and
+		| or_expr 'or' and_term
+
+and_term -> compare
+		| and_term  'and' compare
+
+compare -> expr
+			| 'not'^* compare
+			| compare '==' expr
+			| compare '/=' expr
+			| compare '>' expr
+			| compare '>=' expr
+			| compare '<' expr
+			| compare '<=' expr
+
+expr -> term
+		| expr '+' term
+		| expr '-' term
+
+term -> ('+' + '-')^* factor
+		| term '*' ('+' + '-')^* factor
+		| term '/' ('+' + '-')^* factor
+
+factor -> atom
+			| '(' var ')'
+			| factor '^' factor
+
+atom = terminal
+		| 'if' or_expr 'then' var^* ('elif' or_expr 'then' var^*)^* ('else' var^*)? 'endif'
+		| 'for' 'var' ID '=' expr 'to' expr 'then' var^* 'endfor'
+		| 'while' or_expr 'then' var^* 'endwhile'
+
+terminal -> INT | FLOAT | ID | True | False
