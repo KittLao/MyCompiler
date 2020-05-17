@@ -122,6 +122,61 @@ class WhileLoopNode:
 		return f"while {self.while_cond} then\n\t{self.loop_expr}\nendwhile\n"
 
 
+"""
+Functions
+"""
+
+# :Token: -> :[Token]: -> :Node: 
+class FuncDeclNode:
+	def __init__(self, func_name, params, func_expr):
+		self.func_name = func_name
+		self.params = params
+		self.func_expr = func_expr
+		self.start_pos = func.start_pos
+		self.end_pos = func_expr.end_pos
+
+	def __repr__(self):
+		func_repr = f"def {self.func_name}("
+		for i in range(len(self.params)):
+			func_repr += f"{self.params[i]}" if i == 0 else f", {self.params[i]}"
+		func_repr += ") {\n\t"
+		func_repr += f"{self.func_expr}" + "\n}" 
+		return func_repr
+
+# :string: -> :[Node]:
+class FuncCallNode:
+	def __init__(self, func_name, args):
+		self.func_name = func_name
+		self.args = args
+		self.start_pos = func.start_pos
+		self.end_pos = func_expr.end_pos
+
+	def __repr__(self):
+		call_repr = f"{self.func_name}("
+		for i in range(len(self.args)):
+			call_repr += f"{self.args[i]}" if i == 0 else f", {self.args[i]}"
+		call_repr += ')'
+		return call_repr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -225,6 +225,8 @@ class Parser:
 			return self.build_forLoop_ast();
 		elif token.matches(TT_KEYWORD, KEYWORDS[9]): # while
 			return self.build_whileLoop_ast();
+		elif token.matches(TT_KEYWORD, KEYWORDS[11]): # def
+			return self.build_decl_func_ast();
 		"""
 		Comes across a symbol that isn't a terminal or leads to a sub expression.
 		"""
@@ -232,6 +234,47 @@ class Parser:
 			InvalidSyntaxError(token.start_pos, token.end_pos, 
 				"Expected int, float, identifier, '^', or '('")
 			)
+
+	def terminal(self):
+		result = ParseResult()
+		token = self.cur_token
+		if token.type in (TT_INT, TT_FLOAT, TT_BOOL):
+			result.register_advancement()
+			next_tok = self.advance()
+			num = NumberNode(token)
+			return self.build_exp_ast(num, next_tok, result) if next_tok.type == TT_EXP else result.success(num)
+		elif token.type == TT_ID:
+			result.register_advancement()
+			next_tok = self.advance()
+			var = VarAccessNode(token)
+			if next_tok.type == TT_EXP:
+				return self.build_exp_ast(var, next_tok, result)
+			elif next_tok.type == TT_L_PAREN:
+				func_call_ast = result.register(self.build_func_call_ast(token))
+				if result.error: return result
+				token = self.cur_token
+				return self.build_exp_ast(func_call_ast, token, result) if token.type == TT_EXP else result.success(func_call_ast)
+			else:
+				return result.success(var)
+		"""
+		Comes across a symbol that isn't a terminal or leads to a sub expression.
+		"""
+		return result.failure(
+			InvalidSyntaxError(token.start_pos, token.end_pos, 
+				"Expected int, float, or identifier")
+			)
+
+	"""
+	If there is an exponent, build tree for it first. The exponent could
+	either be a number, expression around parenthesis, or another exponent.
+	It falls into the category of a factor.
+	"""
+	def build_exp_ast(self, left_operand, expo, result):
+		result.register_advancement()
+		self.advance()
+		exp_fact = result.register(self.factor())
+		if result.error: return result
+		return result.success(BinaryOpNode(expo, left_operand, exp_fact)) 
 
 	def build_conditional_ast(self):
 		# Parse if statement
@@ -354,37 +397,77 @@ class Parser:
 		self.advance()
 		return result.success(WhileLoopNode(while_cond, loop_expr))
 
-	def terminal(self):
+	def build_decl_func_ast(self):
 		result = ParseResult()
-		token = self.cur_token
-		if token.type in (TT_INT, TT_FLOAT, TT_BOOL):
-			result.register_advancement()
-			next_tok = self.advance()
-			num = NumberNode(token)
-			return self.build_exp_ast(num, next_tok, result) if next_tok.type == TT_EXP else result.success(num)
-		elif token.type == TT_ID:
-			result.register_advancement()
-			next_tok = self.advance()
-			var = VarAccessNode(token)
-			return self.build_exp_ast(var, next_tok, result) if next_tok.type == TT_EXP else result.success(var)
-		"""
-		Comes across a symbol that isn't a terminal or leads to a sub expression.
-		"""
-		return result.failure(
-			InvalidSyntaxError(token.start_pos, token.end_pos, 
-				"Expected int, float, or identifier")
-			)
-	"""
-	If there is an exponent, build tree for it first. The exponent could
-	either be a number, expression around parenthesis, or another exponent.
-	It falls into the category of a factor.
-	"""
-	def build_exp_ast(self, left_operand, expo, result):
 		result.register_advancement()
 		self.advance()
-		exp_fact = result.register(self.factor())
+		if self.cur_token.type != TT_ID:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Expected identifier"))
+		func_name = self.cur_token
+		result.register_advancement()
+		self.advance()
+		if self.cur_token.type != TT_L_PAREN:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Expected '('"))
+		result.register_advancement()
+		self.advance()
+		params = []
+		while self.cur_token.type == TT_ID:
+			params.append(self.cur_token)
+			result.register_advancement()
+			self.advance()
+			if self.cur_token.type == TT_R_PAREN: break
+			if self.cur_token.type != TT_COMMA:
+				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+					self.cur_token.end_pos, 
+					"Expected ','"))
+			result.register_advancement()
+			self.advance()
+		if self.cur_token.type != TT_R_PAREN:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Expected ')'"))
+		result.register_advancement()
+		self.advance()
+		if self.cur_token.type != TT_L_C_BRACK:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Expected '{'"))
+		result.register_advancement()
+		self.advance()
+		func_ast = result.register(self.build_var_ast())
 		if result.error: return result
-		return result.success(BinaryOpNode(expo, left_operand, exp_fact)) 
+		if self.cur_token.type != TT_R_C_BRACK:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Expected '}'"))
+		return result.success(FuncDeclNode(func_name, params, func_ast))
+
+	def build_func_call_ast(self, func_name):
+		result = ParseResult()
+		result.register_advancement()
+		self.advance()
+		args = []
+		while self.cur_token.type != TT_COMMA:
+			if self.cur_token.type == TT_R_PAREN: break
+			arg = result.register(self.build_logical_ast())
+			if result.error: return result
+			args.append(arg)
+			if self.cur_token.type == TT_COMMA:
+				result.register_advancement()
+				self.advance()
+		if self.cur_token.type != TT_R_PAREN:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Expected ')'"))
+		result.register_advancement()
+		self.advance()
+		return result.success(FuncCallNode(func_name, args))
+
+
 
 
 

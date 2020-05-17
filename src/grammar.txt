@@ -29,9 +29,34 @@ factor -> atom
 			| '(' var ')'
 			| factor '^' factor
 
-atom = terminal
-		| 'if' or_expr 'then' var^* ('elif' or_expr 'then' var^*)^* ('else' var^*)? 'endif'
-		| 'for' 'var' ID '=' expr 'to' expr 'then' var^* 'endfor'
-		| 'while' or_expr 'then' var^* 'endwhile'
+atom = values
+		| if_cond
+		| for_loop
+		| while_loop
+		| decl_func
+		| call_func
 
-terminal -> INT | FLOAT | ID | True | False
+values -> INT | FLOAT | ID | True | False
+
+if_cond -> 'if' or_expr 'then' var^* ('elif' or_expr 'then' var^*)^* ('else' var^*)? 'endif'
+
+for_loop -> 'for' 'var' ID '=' expr 'to' expr 'then' var^* 'endfor'
+
+while_loop -> 'while' or_expr 'then' var^* 'endwhile'
+
+decl_func -> 'def' ID '(' arg_seq ')' '{' var^* '}'
+
+call_func -> ID '(' seq ')'
+
+arg_seq -> (ID (',' ID)^*)?
+
+seq -> (or_expr (',' or_expr)^*)?
+
+
+
+
+
+
+
+
+

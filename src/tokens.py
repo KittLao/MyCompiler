@@ -11,6 +11,9 @@ TT_MOD = "<MOD>"
 
 TT_L_PAREN = "<L_PAREN>"
 TT_R_PAREN = "<R_PAREN>"
+TT_L_C_BRACK = "<L_C_BRACK>"
+TT_R_C_BRACK = "<L_R_BRACK>"
+TT_COMMA = "<COMMA>"
 
 TT_WORD_OPERATOR = "<WORD_OPERATOR>"
 TT_KEYWORD = "<KEYWORD>"
@@ -43,7 +46,8 @@ KEYWORDS = [
 	"to", # 7
 	"endfor", # 8
 	"while", # 9
-	"endwhile" # 10
+	"endwhile", # 10
+	"def" # 11
 ]
 
 BOOLEANS = [

@@ -55,12 +55,21 @@ class Lexer:
 			elif self.cur_symbol == ')':
 				tokens.append(Token(TT_R_PAREN, start_pos=self.pos))
 				self.advance()
+			elif self.cur_symbol == '{':
+				tokens.append(Token(TT_L_C_BRACK, start_pos=self.pos))
+				self.advance()
+			elif self.cur_symbol == '}':
+				tokens.append(Token(TT_R_C_BRACK, start_pos=self.pos))
+				self.advance()
 			elif self.cur_symbol == '=':
 				tokens.append(self.generate_compare(TT_EQT, TT_EQ))
 			elif self.cur_symbol == '<':
 				tokens.append(self.generate_compare(TT_LTE, TT_LT))
 			elif self.cur_symbol == '>':
 				tokens.append(self.generate_compare(TT_GTE, TT_GT))
+			elif self.cur_symbol == ',':
+				tokens.append(Token(TT_COMMA, start_pos=self.pos))
+				self.advance()	
 			else:
 				pos_begin = self.pos.copy()
 				illegal_symbol = self.cur_symbol

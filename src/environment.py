@@ -45,3 +45,31 @@ class Environment:
 	def remove(self, var_name):
 		if var_name in self.symbols:
 			del self.symbols[var_name]
+
+class FunctionEnvironment(Environment):
+	def __init__(self, parent=None):
+		super().__init__(parent)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

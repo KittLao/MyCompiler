@@ -8,4 +8,5 @@ class Context:
 		self.display_name = display_name
 		self.parent = parent
 		self.parent_entry_pos = parent_entry_pos
-		self.symbol_table = None # Environment
+		self.env = None # data environment
+		self.func_env = None # function environemnt

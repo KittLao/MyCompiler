@@ -122,7 +122,7 @@ class Evaluator:
 	def eval_VarAccessNode(self, node, context):
 		result = EvaluateResult()
 		var_name = node.var_name.value
-		value = context.symbol_table.get(var_name)
+		value = context.env.get(var_name)
 		if not value:
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"'{var_name}' is not defined", context))
@@ -145,7 +145,7 @@ class Evaluator:
 		var_name = node.var_name.value
 		var_value = result.register(self.eval(node.expr_assign, context))
 		if result.error: return result
-		context.symbol_table.set(var_name, var_value)
+		context.env.set(var_name, var_value)
 		return result.success(var_value)
 
 	def eval_ConditionalNode(self, node, context):
@@ -156,7 +156,8 @@ class Evaluator:
 		if_cond = result.register(self.eval(node.if_cond, context))
 		if result.error: return result
 		child_context = Context(context.display_name, context, node.start_pos)
-		child_context.symbol_table = Environment(context.symbol_table)
+		child_context.env = Environment(context.env)
+		child_context.func_env = FunctionEnvironment(context.func_env)
 		if if_cond.value:
 			if_value = result.register(self.eval(node.if_expr, child_context))
 			if result.error: return result
@@ -193,16 +194,18 @@ class Evaluator:
 				final_val.end_pos, f"Exptecing int", context))
 
 		child_context = Context(context.display_name, context, node.start_pos)
-		child_context.symbol_table = Environment(context.symbol_table)
-		child_context.symbol_table.set(node.var_name.value, init_val)
+		child_context.env = Environment(context.env)
+		child_context.env.set(node.var_name.value, init_val)
+		child_context.func_env = FunctionEnvironment(context.func_env)
+		loop_val = Value(None)
 		while init_val.value < final_val.value:
 			loop_val = result.register(self.eval(node.loop_expr, child_context))
 			if result.error: return result
 			init_val, error = init_val.add_to(Value(1))
 			if error: return result.failure(error)
-			child_context.symbol_table.set(node.var_name.value, init_val)
+			child_context.env.set(node.var_name.value, init_val)
 
-		return result.success(Value(None).set_pos(node.start_pos, node.end_pos))
+		return result.success(loop_val.set_pos(node.start_pos, node.end_pos))
 
 	def eval_WhileLoopNode(self, node, context):
 		result = EvaluateResult()
@@ -210,19 +213,49 @@ class Evaluator:
 		if result.error: return result
 
 		child_context = Context(context.display_name, context, node.start_pos)
-		child_context.symbol_table = Environment(context.symbol_table)
+		child_context.env = Environment(context.env)
+		child_context.func_env = FunctionEnvironment(context.func_env)
+		loop_val = Value(None)
 		while while_cond.value:
 			loop_val = result.register(self.eval(node.loop_expr, child_context))
 			if result.error: return result
 			while_cond = result.register(self.eval(node.while_cond, context))
 			if result.error: return result
 
-		return result.success(Value(None).set_pos(node.start_pos, node.end_pos))
+		return result.success(loop_val.set_pos(node.start_pos, node.end_pos))
 
+	def eval_FuncDeclNode(self, node, context):
+		result = EvaluateResult()
+		param_ids = [x for x in node.params.value]
+		if len(param_ids) != len(set(param_ids)):
+			return result.failure(RunTimeError(node.start_pos,
+				node.end_pos, f"Duplicate parameters in function '{node.func_name}'", context))
+		context.func_env.set(node.func_name, node)
+		return result.success(Value(None))
 
-
-
-
+	def eval_FuncCallNode(self, node, context):
+		func_name = node.func_name
+		args = node.args
+		func = context.func_env.get(func_name)
+		if func == None:
+			return result.failure(RunTimeError(node.start_pos,
+				node.end_pos, f"'{func_name}' is not defined", context))
+		params = func.params
+		if len(params) != len(args):
+			return result.failure(RunTimeError(node.start_pos,
+				node.end_pos, f"Invalid number of arguments", context))
+		func_expr = func.func_expr
+		child_context = Context(context.display_name, context, node.start_pos)
+		child_context.env = Environment(context.env)
+		child_context.func_env = FunctionEnvironment(context.func_env)
+		for param, arg in list(zip(params, args)):
+			arg_val = result.register(self.eval(arg, context))
+			if result.error: return result
+			child_context.env.set(param.value, arg_val)
+		func_val = result.register(self.eval(func_expr, child_context))
+		if result.error: return result
+		return result.success(func_val.set_pos(node.start_pos, node.end_pos))
+		
 
 
 
