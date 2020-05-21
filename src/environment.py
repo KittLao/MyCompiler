@@ -1,6 +1,8 @@
 class Environment:
 	def __init__(self, parent=None):
-		self.symbols = {} # string => Value
+		# :string: => :Value: if environment
+		# :string: => :Node: if func_env
+		self.symbols = {}
 		self.parent = parent # :Environment:
 
 	"""

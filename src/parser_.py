@@ -246,7 +246,6 @@ class Parser:
 		elif token.type == TT_ID:
 			result.register_advancement()
 			next_tok = self.advance()
-			var = VarAccessNode(token)
 			if next_tok.type == TT_EXP:
 				return self.build_exp_ast(var, next_tok, result)
 			elif next_tok.type == TT_L_PAREN:
@@ -255,10 +254,8 @@ class Parser:
 				token = self.cur_token
 				return self.build_exp_ast(func_call_ast, token, result) if token.type == TT_EXP else result.success(func_call_ast)
 			else:
-				return result.success(var)
-		"""
-		Comes across a symbol that isn't a terminal or leads to a sub expression.
-		"""
+				return result.success(VarAccessNode(token))
+		# Comes across a symbol that isn't a terminal or leads to a sub expression.
 		return result.failure(
 			InvalidSyntaxError(token.start_pos, token.end_pos, 
 				"Expected int, float, or identifier")
@@ -450,6 +447,7 @@ class Parser:
 		result = ParseResult()
 		result.register_advancement()
 		self.advance()
+		# parse through all the arguments.
 		args = []
 		while self.cur_token.type != TT_COMMA:
 			if self.cur_token.type == TT_R_PAREN: break

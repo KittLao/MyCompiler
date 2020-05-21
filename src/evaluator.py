@@ -227,31 +227,38 @@ class Evaluator:
 	def eval_FuncDeclNode(self, node, context):
 		result = EvaluateResult()
 		param_ids = [x for x in node.params.value]
+		# Check if there are duplicate parameters.
 		if len(param_ids) != len(set(param_ids)):
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"Duplicate parameters in function '{node.func_name}'", context))
-		context.func_env.set(node.func_name, node)
+		# Store the declared function as a value in function environment
+		context.func_env.set(node.func_name.value, node)
 		return result.success(Value(None))
 
 	def eval_FuncCallNode(self, node, context):
-		func_name = node.func_name
+		func_name = node.func_name.value
 		args = node.args
 		func = context.func_env.get(func_name)
+		# Function needs to be defined.
 		if func == None:
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"'{func_name}' is not defined", context))
 		params = func.params
+		# Number of arguments and parameters need to match.
 		if len(params) != len(args):
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"Invalid number of arguments", context))
 		func_expr = func.func_expr
-		child_context = Context(context.display_name, context, node.start_pos)
+		# Declare a new context for the function.
+		child_context = Context(func_name, context, node.start_pos)
 		child_context.env = Environment(context.env)
 		child_context.func_env = FunctionEnvironment(context.func_env)
+		# Bind all arguments to the parameters.
 		for param, arg in list(zip(params, args)):
 			arg_val = result.register(self.eval(arg, context))
 			if result.error: return result
 			child_context.env.set(param.value, arg_val)
+		# Evaluate the function expression.
 		func_val = result.register(self.eval(func_expr, child_context))
 		if result.error: return result
 		return result.success(func_val.set_pos(node.start_pos, node.end_pos))
