@@ -223,9 +223,9 @@ class Parser:
 			return self.build_conditional_ast()
 		elif token.matches(TT_KEYWORD, KEYWORDS[6]): # for
 			return self.build_forLoop_ast();
-		elif token.matches(TT_KEYWORD, KEYWORDS[9]): # while
+		elif token.matches(TT_KEYWORD, KEYWORDS[10]): # while
 			return self.build_whileLoop_ast();
-		elif token.matches(TT_KEYWORD, KEYWORDS[11]): # def
+		elif token.matches(TT_KEYWORD, KEYWORDS[12]): # def
 			return self.build_decl_func_ast();
 		"""
 		Comes across a symbol that isn't a terminal or leads to a sub expression.
@@ -356,15 +356,15 @@ class Parser:
 		self.advance()
 		final_expr = result.register(self.build_arith_ast())
 		if result.error: return result
-		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[2]): # then
+		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[8]): # then
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
-				"Expected 'then'"))
+				"Expected 'do'"))
 		result.register_advancement()
 		self.advance()
 		loop_expr = result.register(self.build_var_ast())
 		if result.error: return result
-		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[8]): # endfor
+		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[9]): # endfor
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected 'endfor'"))
@@ -378,15 +378,15 @@ class Parser:
 		self.advance()
 		while_cond = result.register(self.build_logical_ast())
 		if result.error: return result
-		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[2]): # then
+		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[8]): # then
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
-				"Expected 'then'"))
+				"Expected 'do'"))
 		result.register_advancement()
 		self.advance()
 		loop_expr = result.register(self.build_var_ast())
 		if result.error: return result
-		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[10]): # endfor
+		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[11]): # endwhile
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected 'endwhile'"))

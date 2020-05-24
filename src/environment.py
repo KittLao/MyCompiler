@@ -1,6 +1,6 @@
 class Environment:
 	def __init__(self, parent=None):
-		# :string: => :Value: if environment
+		# :string: => :Primitives: if environment
 		# :string: => :Node: if func_env
 		self.symbols = {}
 		self.parent = parent # :Environment:
@@ -51,6 +51,10 @@ class Environment:
 class FunctionEnvironment(Environment):
 	def __init__(self, parent=None):
 		super().__init__(parent)
+
+	def exists(self, func_sign):
+		if not self.parent: return func_sign in self.symbols
+		return True if func_sign in self.symbols else self.parent.exists(func_sign)
 
 
 

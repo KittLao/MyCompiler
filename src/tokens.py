@@ -44,10 +44,11 @@ KEYWORDS = [
 	"endif", # 5
 	"for", # 6
 	"to", # 7
-	"endfor", # 8
-	"while", # 9
-	"endwhile", # 10
-	"def" # 11
+	"do", # 8
+	"endfor", # 9
+	"while", # 10
+	"endwhile", # 11
+	"def" # 12
 ]
 
 BOOLEANS = [

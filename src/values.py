@@ -1,6 +1,6 @@
 from errors import RunTimeError
 
-class Value:
+class Primitives:
 	def __init__(self, value):
 		self.value = value # int, float, boolean, None
 		self.set_pos()
@@ -18,26 +18,35 @@ class Value:
 		self.context = context
 		return self
 
+
+class Value(Primitives):
+	def __init__(self, value):
+		Primitives.__init__(self, value)
+
 	def copy(self):
 		copy = Value(self.value)
 		copy.set_pos(self.start_pos, self.end_pos)
 		copy.set_context(self.context)
 		return copy
 
-	"""
-	:Value: -> :Value:
-	"""
+	# :Value: -> :Value:
 	def add_to(self, other):
 		if isinstance(other, Value):
 			return Value(self.value + other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def sub_by(self, other):
 		if isinstance(other, Value):
 			return Value(self.value - other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def mult_by(self, other):
 		if isinstance(other, Value):
 			return Value(self.value * other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def div_by(self, other):
 		if isinstance(other, Value):
@@ -47,52 +56,100 @@ class Value:
 					"Division by zero",
 					self.context)
 			return Value(self.value / other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def pow_of(self, other):
 		if isinstance(other, Value):
 			return Value(self.value ** other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def mod_by(self, other):
 		if isinstance(other, Value):
+			if other.value == 0:
+				return None, RunTimeError(other.start_pos,
+					other.end_pos,
+					"Modulo by zero",
+					self.context)
 			return Value(self.value % other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def negate(self):
-		return Value(not self.value).set_context(self.context), None
+		if isinstance(self, Value):
+			return Value(not self.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def eq_to(self, other):
 		if isinstance(other, Value):
 			return Value(self.value == other.value).set_context(self.context), None 
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def not_eq_to(self, other):
 		if isinstance(other, Value):
-			return Value(self.value != other.value).set_context(self.context), None 
+			return Value(self.value != other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def less_than(self, other):
 		if isinstance(other, Value):
 			return Value(self.value < other.value).set_context(self.context), None 
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def grt_than(self, other):
 		if isinstance(other, Value):
 			return Value(self.value > other.value).set_context(self.context), None 
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def less_eq(self, other):
 		if isinstance(other, Value):
 			return Value(self.value <= other.value).set_context(self.context), None 
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def grt_eq(self, other):
 		if isinstance(other, Value):
 			return Value(self.value >= other.value).set_context(self.context), None 
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def and_by(self, other):
 		if isinstance(other, Value):
-			return Value(self.value and other.value).set_context(self.context), None 
+			return Value(self.value and other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
 	def or_by(self, other):
 		if isinstance(other, Value):
-			return Value(self.value or other.value).set_context(self.context), None 
+			return Value(self.value or other.value).set_context(self.context), None
+		return None, RunTimeError(other.start_pos, other.end_pos,
+					"Requires 'Value' type", self.context)
 
+# :string: -> :int:
+class FunctionPointer(Primitives):
+	def __init__(self, value, param_count):
+		# value: <function: name>
+		func_prt = f"<function: {value}>"
+		self.param_count = param_count
+		Primitives.__init__(self, func_prt)
+		
+	def copy(self):
+		copy = FunctionPointer(self.value)
+		copy.set_pos(self.start_pos, self.end_pos)
+		copy.set_context(self.context)
+		return copy
 
-
+	"""
+	Signature used as key to access the actual expression of
+	the function.
+	"""
+	def get_signature():
+		return (self.value, self.param_count)
 
 
 

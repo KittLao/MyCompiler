@@ -1,7 +1,7 @@
 from tokens import *
 from values import *
 from context import Context
-from environment import Environment
+from environment import *
 
 class EvaluateResult:
 	def __init__(self):
@@ -45,6 +45,10 @@ class Evaluator:
 		eval_VarAccessNode
 		eval_VarAssignNode
 		eval_ConditionalNode
+		eval_ForLoopNode
+		eval_WhileLoopNode
+		eval_FuncDeclNode
+		eval_FuncCallNode
 		"""
 		method_name = f"eval_{type(node).__name__}"
 		method = getattr(self, method_name, self.eval_unknown)
@@ -158,6 +162,7 @@ class Evaluator:
 		child_context = Context(context.display_name, context, node.start_pos)
 		child_context.env = Environment(context.env)
 		child_context.func_env = FunctionEnvironment(context.func_env)
+		child_context.func_names = context.func_names.copy()
 		if if_cond.value:
 			if_value = result.register(self.eval(node.if_expr, child_context))
 			if result.error: return result
@@ -197,6 +202,7 @@ class Evaluator:
 		child_context.env = Environment(context.env)
 		child_context.env.set(node.var_name.value, init_val)
 		child_context.func_env = FunctionEnvironment(context.func_env)
+		child_context.func_names = context.func_names.copy()
 		loop_val = Value(None)
 		while init_val.value < final_val.value:
 			loop_val = result.register(self.eval(node.loop_expr, child_context))
@@ -215,6 +221,7 @@ class Evaluator:
 		child_context = Context(context.display_name, context, node.start_pos)
 		child_context.env = Environment(context.env)
 		child_context.func_env = FunctionEnvironment(context.func_env)
+		child_context.func_names = context.func_names.copy()
 		loop_val = Value(None)
 		while while_cond.value:
 			loop_val = result.register(self.eval(node.loop_expr, child_context))
@@ -224,6 +231,14 @@ class Evaluator:
 
 		return result.success(loop_val.set_pos(node.start_pos, node.end_pos))
 
+	"""
+	Function errors:
+		Duplicate function
+		Duplicate aparameter
+		Function undefined
+		Invalid number of arguments
+	"""
+
 	def eval_FuncDeclNode(self, node, context):
 		result = EvaluateResult()
 		param_ids = [x for x in node.params.value]
@@ -232,27 +247,37 @@ class Evaluator:
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"Duplicate parameters in function '{node.func_name}'", context))
 		# Store the declared function as a value in function environment
-		context.func_env.set(node.func_name.value, node)
+		func_ptr = FunctionPointer(node.func_name, len(param_ids))
+		# Check to see if function already exists.
+		if context.func_env.exists(func_ptr.get_signature()):
+			return result.failure(RunTimeError(node.start_pos,
+				node.end_pos, f"Duplicate funtion '{node.func_name}'", context))
+		# Update the context
+		context.env.set(node.func_name.value, func_ptr)
+		context.func_env.set(func_ptr.get_signature(), node)
+		context.func_names.add(node.func_name.value)
 		return result.success(Value(None))
 
 	def eval_FuncCallNode(self, node, context):
 		func_name = node.func_name.value
-		args = node.args
-		func = context.func_env.get(func_name)
 		# Function needs to be defined.
-		if func == None:
+		if func_name not in context.func_names:
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"'{func_name}' is not defined", context))
-		params = func.params
+		args = node.args
+		func_signature = (f"<function: {func_name}>", len(args)) # generate key
+		func_node = context.func_env.get(func_signature)
 		# Number of arguments and parameters need to match.
-		if len(params) != len(args):
+		if not func_node:
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"Invalid number of arguments", context))
-		func_expr = func.func_expr
+		func_expr = func_node.func_expr
+		params = func_node.params
 		# Declare a new context for the function.
 		child_context = Context(func_name, context, node.start_pos)
 		child_context.env = Environment(context.env)
 		child_context.func_env = FunctionEnvironment(context.func_env)
+		child_context.func_names = context.func_names.copy()
 		# Bind all arguments to the parameters.
 		for param, arg in list(zip(params, args)):
 			arg_val = result.register(self.eval(arg, context))
