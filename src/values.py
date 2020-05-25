@@ -146,9 +146,9 @@ class FunctionPointer(Primitives):
 
 	"""
 	Signature used as key to access the actual expression of
-	the function.
+	the function. 
 	"""
-	def get_signature():
+	def get_signature(self):
 		return (self.value, self.param_count)
 
 

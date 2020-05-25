@@ -9,6 +9,10 @@ global_env = Environment()
 global_env.set("null", Value(0))
 global_func_env = FunctionEnvironment()
 
+context = Context("<program>")
+context.env = global_env
+context.func_env = global_func_env
+
 while True:
 	text = input("<<< ")
 	lexer = Lexer("<stdin>", text)
@@ -19,9 +23,6 @@ while True:
 		ast = parser.parse()
 		if ast.error == None:
 			# print(ast.node)
-			context = Context("<program>")
-			context.env = global_env
-			context.func_env = global_func_env
 			evaluator = Evaluator(ast.node, context)
 			value = evaluator.evaluate()
 			if value.error == None:

@@ -441,6 +441,8 @@ class Parser:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected '}'"))
+		result.register_advancement()
+		self.advance()
 		return result.success(FuncDeclNode(func_name, params, func_ast))
 
 	def build_func_call_ast(self, func_name):

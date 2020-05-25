@@ -241,17 +241,17 @@ class Evaluator:
 
 	def eval_FuncDeclNode(self, node, context):
 		result = EvaluateResult()
-		param_ids = [x for x in node.params.value]
+		param_ids = [x.value for x in node.params]
 		# Check if there are duplicate parameters.
 		if len(param_ids) != len(set(param_ids)):
 			return result.failure(RunTimeError(node.start_pos,
-				node.end_pos, f"Duplicate parameters in function '{node.func_name}'", context))
+				node.end_pos, f"Duplicate parameters in function '{node.func_name.value}'", context))
 		# Store the declared function as a value in function environment
-		func_ptr = FunctionPointer(node.func_name, len(param_ids))
+		func_ptr = FunctionPointer(node.func_name.value, len(param_ids))
 		# Check to see if function already exists.
 		if context.func_env.exists(func_ptr.get_signature()):
 			return result.failure(RunTimeError(node.start_pos,
-				node.end_pos, f"Duplicate funtion '{node.func_name}'", context))
+				node.end_pos, f"Duplicate funtion '{node.func_name.value}'", context))
 		# Update the context
 		context.env.set(node.func_name.value, func_ptr)
 		context.func_env.set(func_ptr.get_signature(), node)
@@ -259,11 +259,12 @@ class Evaluator:
 		return result.success(Value(None))
 
 	def eval_FuncCallNode(self, node, context):
+		result = EvaluateResult()
 		func_name = node.func_name.value
 		# Function needs to be defined.
 		if func_name not in context.func_names:
 			return result.failure(RunTimeError(node.start_pos,
-				node.end_pos, f"'{func_name}' is not defined", context))
+				node.end_pos, f"'{func_name}' function is not defined", context))
 		args = node.args
 		func_signature = (f"<function: {func_name}>", len(args)) # generate key
 		func_node = context.func_env.get(func_signature)

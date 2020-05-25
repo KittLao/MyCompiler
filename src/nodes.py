@@ -132,7 +132,7 @@ class FuncDeclNode:
 		self.func_name = func_name
 		self.params = params
 		self.func_expr = func_expr
-		self.start_pos = func.start_pos
+		self.start_pos = func_name.start_pos
 		self.end_pos = func_expr.end_pos
 
 	def __repr__(self):
@@ -143,13 +143,13 @@ class FuncDeclNode:
 		func_repr += f"{self.func_expr}" + "\n}" 
 		return func_repr
 
-# :string: -> :[Node]:
+# :Token: -> :[Node]:
 class FuncCallNode:
 	def __init__(self, func_name, args):
 		self.func_name = func_name
 		self.args = args
-		self.start_pos = func.start_pos
-		self.end_pos = func_expr.end_pos
+		self.start_pos = func_name.start_pos
+		self.end_pos = func_name.end_pos if args == [] else args[len(args)-1].end_pos
 
 	def __repr__(self):
 		call_repr = f"{self.func_name}("
