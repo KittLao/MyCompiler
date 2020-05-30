@@ -40,6 +40,12 @@ class Environment:
 		else:
 			return self.set_exists(env.parent, var_name, var_value) # Check if exist in parent.
 
+	"""
+	Used to check if a function exists, so variable names cannot override functions.
+	"""
+	def exists(self, func_name):
+		if not self.parent: return func_name in self.symbols
+		return True if func_name in self.symbols else self.parent.exists(func_name)
 
 	"""
 	Will remove the symbol in the most current environment
@@ -51,10 +57,6 @@ class Environment:
 class FunctionEnvironment(Environment):
 	def __init__(self, parent=None):
 		super().__init__(parent)
-
-	def exists(self, func_sign):
-		if not self.parent: return func_sign in self.symbols
-		return True if func_sign in self.symbols else self.parent.exists(func_sign)
 
 
 

@@ -2,7 +2,7 @@ from errors import RunTimeError
 
 class Primitives:
 	def __init__(self, value):
-		self.value = value # int, float, boolean, None
+		self.value = value # int, float, boolean, Node, None
 		self.set_pos()
 		self.set_context()
 
@@ -18,16 +18,16 @@ class Primitives:
 		self.context = context
 		return self
 
-
-class Value(Primitives):
-	def __init__(self, value):
-		Primitives.__init__(self, value)
-
 	def copy(self):
 		copy = Value(self.value)
 		copy.set_pos(self.start_pos, self.end_pos)
 		copy.set_context(self.context)
 		return copy
+
+
+class Value(Primitives):
+	def __init__(self, value):
+		Primitives.__init__(self, value)
 
 	# :Value: -> :Value:
 	def add_to(self, other):
@@ -130,26 +130,12 @@ class Value(Primitives):
 		return None, RunTimeError(other.start_pos, other.end_pos,
 					"Requires 'Value' type", self.context)
 
-# :string: -> :int:
-class FunctionPointer(Primitives):
-	def __init__(self, value, param_count):
-		# value: <function: name>
-		func_prt = f"<function: {value}>"
-		self.param_count = param_count
-		Primitives.__init__(self, func_prt)
-		
-	def copy(self):
-		copy = FunctionPointer(self.value)
-		copy.set_pos(self.start_pos, self.end_pos)
-		copy.set_context(self.context)
-		return copy
+class FunctionValue(Primitives):
+	def __init__(self, func_node):
+		Primitives.__init__(self, func_node)
 
-	"""
-	Signature used as key to access the actual expression of
-	the function. 
-	"""
-	def get_signature(self):
-		return (self.value, self.param_count)
+
+
 
 
 

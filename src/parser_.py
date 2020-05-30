@@ -247,7 +247,7 @@ class Parser:
 			result.register_advancement()
 			next_tok = self.advance()
 			if next_tok.type == TT_EXP:
-				return self.build_exp_ast(var, next_tok, result)
+				return self.build_exp_ast(VarAccessNode(token), next_tok, result)
 			elif next_tok.type == TT_L_PAREN:
 				func_call_ast = result.register(self.build_func_call_ast(token))
 				if result.error: return result

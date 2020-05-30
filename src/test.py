@@ -9,12 +9,10 @@ global_env = Environment()
 global_env.set("null", Value(0))
 global_func_env = FunctionEnvironment()
 
-context = Context("<program>")
-context.env = global_env
-context.func_env = global_func_env
+context = Context("<program>", global_env, global_func_env)
 
 while True:
-	text = input("<<< ")
+	text = input(">>> ")
 	lexer = Lexer("<stdin>", text)
 	tokens, errors = lexer.generate_tokens()
 	if errors == None:
@@ -26,7 +24,7 @@ while True:
 			evaluator = Evaluator(ast.node, context)
 			value = evaluator.evaluate()
 			if value.error == None:
-				print(">>>", value.value)
+				print(value.value)
 			else:
 				print(value.error.as_string())
 		else:

@@ -4,10 +4,16 @@ the parent context
 """
 class Context:
 	# :string: -> :Context: -> :Position:
-	def __init__(self, display_name, parent=None, parent_entry_pos=None):
+	def __init__(self, display_name, env, func_env, parent=None, parent_entry_pos=None):
 		self.display_name = display_name
 		self.parent = parent
 		self.parent_entry_pos = parent_entry_pos
-		self.env = None # variable environment
-		self.func_env = None # function environemnt
-		self.func_names = set()
+		self.env = env # variable environment
+		self.func_env = func_env # function environment
+
+	def get_context_relative_to(self, func_name):
+		cur_ctx = self
+		while cur_ctx:
+			if func_name in cur_ctx.env.symbols: return cur_ctx
+			cur_ctx = cur_ctx.parent
+
