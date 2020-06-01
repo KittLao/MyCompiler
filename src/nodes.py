@@ -44,11 +44,11 @@ Variables
 
 # :Token: -> :Node:
 class VarAssignNode:
-	def __init__(self, var_name, expr_assign):
+	def __init__(self, var_name, expr_assign=None):
 		self.var_name = var_name
 		self.expr_assign = expr_assign
 		self.start_pos = var_name.start_pos
-		self.end_pos = expr_assign.end_pos
+		self.end_pos = expr_assign.end_pos if expr_assign else None
 
 	def __repr__(self):
 		return f"({self.var_name} = {self.expr_assign})"
@@ -126,7 +126,7 @@ class WhileLoopNode:
 Functions
 """
 
-# :Token: -> :[Token]: -> :Node: 
+# :Token: -> :[VarAssign]: -> :Node: 
 class FuncDeclNode:
 	def __init__(self, func_name, params, func_expr):
 		self.func_name = func_name
@@ -150,6 +150,7 @@ class FuncCallNode:
 		self.args = args
 		self.start_pos = func_name.start_pos
 		self.end_pos = func_name.end_pos if args == [] else args[len(args)-1].end_pos
+		self.next_call = None
 
 	def __repr__(self):
 		call_repr = f"{self.func_name}("

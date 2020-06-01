@@ -3,7 +3,7 @@ A linked list of contexts. Each context consists of the function name, and
 the parent context
 """
 class Context:
-	# :string: -> :Context: -> :Position:
+	# :string: -> :Environment: -> :FunctionEnvironment: -> :Context: -> :Position:
 	def __init__(self, display_name, env, func_env, parent=None, parent_entry_pos=None):
 		self.display_name = display_name
 		self.parent = parent

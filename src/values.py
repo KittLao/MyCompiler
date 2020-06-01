@@ -131,8 +131,12 @@ class Value(Primitives):
 					"Requires 'Value' type", self.context)
 
 class FunctionValue(Primitives):
-	def __init__(self, func_node):
+	def __init__(self, func_node, context):
 		Primitives.__init__(self, func_node)
+		self.relative_context = context
+
+	def get_declared_name(self):
+		return self.value.func_name.value
 
 
 

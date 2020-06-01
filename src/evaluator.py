@@ -142,18 +142,21 @@ class Evaluator:
 
 		The error would point to ">>> 5 / a"
 		"""
-		value = value.copy().set_pos(node.start_pos, node.end_pos)
+		if isinstance(value, Value):
+			value = value.copy().set_pos(node.start_pos, node.end_pos)
 		return result.success(value)
 
 	def eval_VarAssignNode(self, node, context):
 		result = EvaluateResult()
 		var_name = node.var_name.value
+		# print("var assign " + var_name)
 		if context.func_env.exists(var_name):
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"'{var_name}' is already declared as a function", context))
 		var_value = result.register(self.eval(node.expr_assign, context))
 		if result.error: return result
 		context.env.set(var_name, var_value)
+		# print("After updating context: ", context.env.symbols)
 		return result.success(var_value)
 
 	def eval_ConditionalNode(self, node, context):
@@ -162,8 +165,8 @@ class Evaluator:
 		if_cond = result.register(self.eval(node.if_cond, context))
 		if result.error: return result
 		# Build new context for the scope of the expression.
-		child_context = Context(context.display_name, Environment(context.env),
-								FunctionEnvironment(context.func_env), context,
+		child_context = Context(context.display_name, context.env,
+								context.func_env, context,
 								node.start_pos)
 		# If condition is true, evaluate the if expression and just return the value
 		if if_cond.value:
@@ -201,8 +204,8 @@ class Evaluator:
 			return result.failure(RunTimeError(final_val.start_pos,
 				final_val.end_pos, f"Exptecing int", context))
 		# Build new context for the loop scope and allow iterator to within bounds
-		child_context = Context(context.display_name, Environment(context.env), 
-								FunctionEnvironment(context.func_env), context,
+		child_context = Context(context.display_name, context.env,
+								context.func_env, context,
 								node.start_pos)
 		child_context.env.set(node.var_name.value, init_val)
 		# Evaluate the expression iteratively
@@ -223,8 +226,8 @@ class Evaluator:
 		while_cond = result.register(self.eval(node.while_cond, context))
 		if result.error: return result
 		# Build new context for the loop scope
-		child_context = Context(context.display_name, Environment(context.env), 
-								FunctionEnvironment(context.func_env), context,
+		child_context = Context(context.display_name, context.env,
+								context.func_env, context,
 								node.start_pos)
 		# Keep evaluating the exxpression of the loop while the condition is
 		# true.
@@ -247,7 +250,7 @@ class Evaluator:
 
 	def eval_FuncDeclNode(self, node, context):
 		result = EvaluateResult()
-		param_ids = [x.value for x in node.params]
+		param_ids = [var.var_name.value for var in node.params]
 		func_name = node.func_name.value
 		# Check if there are duplicate parameters.
 		if len(param_ids) != len(set(param_ids)):
@@ -262,44 +265,57 @@ class Evaluator:
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"'{func_name}' declared as variable", context))
 		# Update the variable and funciton environment
-		func_value = FunctionValue(node)
+		func_value = FunctionValue(node, context)
 		context.func_env.set(func_name, func_value)
 		context.env.set(func_name, func_value)
-		return result.success(func_value)
+		return result.success(func_value.set_pos(node.start_pos, node.end_pos))
 
 	def eval_FuncCallNode(self, node, context):
 		result = EvaluateResult()
-		func_name = node.func_name.value
+		func_call_name = node.func_name.value # string
 		# Retreive the function associated with the name
-		func_value = context.env.get(func_name)
+		func_value = context.env.get(func_call_name) # FunctionValue
 		# Function needs to be defined.
 		if not func_value:
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"'{func_name}' function is not defined", context))
-		func_node = func_value.value
-		args = node.args
-		func_expr = func_node.func_expr
-		params = func_node.params
+		# Retreive the functions declared name
+		func_name = func_value.get_declared_name() # string
+		func_node = func_value.value # FuncDeclNode
+		args = node.args # [Node]
+		func_expr = func_node.func_expr # Node
+		params = func_node.params # [VarAssign]
 		# Number of arguments and parameters need to match.
 		if len(args) != len(params):
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"Invalid number of arguments", context))
 		# The relative context is basically the context where the function
 		# being called was declared.
-		relative_context = context.get_context_relative_to(func_name)
+		relative_context = func_value.relative_context
 		# Declare a new context for the function using the relative context
-		child_context = Context(func_name, 
-								Environment(relative_context.env), 
-								FunctionEnvironment(relative_context.func_env),
+		child_context = Context(func_name, relative_context.env, 
+								relative_context.func_env,
 								relative_context, node.start_pos)
 		# Bind all arguments to the parameters.
 		for param, arg in list(zip(params, args)):
-			arg_val = result.register(self.eval(arg, context))
+			# Finish initializing the var VarAssignNode
+			param.expr_assign = arg
+			param.end_pos = arg.end_pos
+			# Interpret the variable inside the funciton's environment
+			param_val = result.register(self.eval_VarAssignNode(param, child_context))
 			if result.error: return result
-			child_context.env.set(param.value, arg_val)
 		# Evaluate the function expression.
 		return_val = result.register(self.eval(func_expr, child_context))
 		if result.error: return result
+		# For sequential calls, evaluate each call by using the returned value
+		# of a preivous call as 
+		if node.next_call:
+			if not isinstance(return_val, FunctionValue):
+				return result.failure(RunTimeError(node.start_pos,
+					node.end_pos, f"'{func_name}' declared as variable", context))
+			return_val = result.register(self.eval_FuncCallNode(node.next_call, context))
+			if result.error: return result
+			return result.success(return_val.set_pos(node.start_pos, node.end_pos))
 		return result.success(return_val.set_pos(node.start_pos, node.end_pos))
 		
 

@@ -131,9 +131,7 @@ class Parser:
 
 	def build_cmp_ast(self):
 		result = ParseResult()
-		"""
-		'Not' operations needs to be evaluated from right to left
-		"""
+		# 'Not' operations needs to be evaluated from right to left
 		if self.cur_token.type == TT_NOT:
 			op_token = self.cur_token
 			result.register_advancement()
@@ -210,9 +208,7 @@ class Parser:
 			self.advance()
 			sub_expr = result.register(self.build_var_ast())
 			if result.error: return result
-			"""
-			When amount open parenthesis doesn't match amount of closed parenthesis.
-			"""
+			# When amount open parenthesis doesn't match amount of closed parenthesis.
 			if self.cur_token.type != TT_R_PAREN:
 				error = InvalidSyntaxError(self.cur_token.start_pos, self.cur_token.end_pos, "Expected ')'")
 				return result.failure(error)
@@ -227,9 +223,7 @@ class Parser:
 			return self.build_whileLoop_ast();
 		elif token.matches(TT_KEYWORD, KEYWORDS[12]): # def
 			return self.build_decl_func_ast();
-		"""
-		Comes across a symbol that isn't a terminal or leads to a sub expression.
-		"""
+		# Comes across a symbol that isn't a terminal or leads to a sub expression.
 		return result.failure(
 			InvalidSyntaxError(token.start_pos, token.end_pos, 
 				"Expected int, float, identifier, '^', or '('")
@@ -241,19 +235,34 @@ class Parser:
 		if token.type in (TT_INT, TT_FLOAT, TT_BOOL):
 			result.register_advancement()
 			next_tok = self.advance()
-			num = NumberNode(token)
-			return self.build_exp_ast(num, next_tok, result) if next_tok.type == TT_EXP else result.success(num)
+			num_ast = NumberNode(token)
+			# Case number being raised to a power
+			if next_tok.type == TT_EXP:
+				exp_ast = result.register(self.build_exp_ast(num_ast, next_tok, result))
+				if result.error: return result
+				return result.success(exp_ast)
+			return result.success(num_ast)
 		elif token.type == TT_ID:
+			# Identifiers could be variable or function names
 			result.register_advancement()
 			next_tok = self.advance()
 			if next_tok.type == TT_EXP:
+				# Case where variable is being raised to a power
 				return self.build_exp_ast(VarAccessNode(token), next_tok, result)
 			elif next_tok.type == TT_L_PAREN:
+				# Case where a function is being called
 				func_call_ast = result.register(self.build_func_call_ast(token))
 				if result.error: return result
+
 				token = self.cur_token
-				return self.build_exp_ast(func_call_ast, token, result) if token.type == TT_EXP else result.success(func_call_ast)
+				# Case for function call being raised to a power
+				if token.type == TT_EXP:
+					exp_ast = result.register(self.build_exp_ast(func_call_ast, token, result))
+					if result.error: return result
+					return result.success(exp_ast)
+				return result.success(func_call_ast)
 			else:
+				# Case where it is just a variable
 				return result.success(VarAccessNode(token))
 		# Comes across a symbol that isn't a terminal or leads to a sub expression.
 		return result.failure(
@@ -261,11 +270,12 @@ class Parser:
 				"Expected int, float, or identifier")
 			)
 
-	"""
-	If there is an exponent, build tree for it first. The exponent could
-	either be a number, expression around parenthesis, or another exponent.
-	It falls into the category of a factor.
-	"""
+	# If there is an exponent, build tree for it first. The exponent could
+	# either be a number, expression around parenthesis, or another exponent.
+	# It falls into the category of a factor.
+
+	# Since exponent operation doesn't fail, no need to check for errors when
+	# calling it
 	def build_exp_ast(self, left_operand, expo, result):
 		result.register_advancement()
 		self.advance()
@@ -375,84 +385,117 @@ class Parser:
 	def build_whileLoop_ast(self):
 		result = ParseResult()
 		result.register_advancement()
+		# Advance past 'while' keyword
 		self.advance()
+		# Loop condition can be anything except variable declaration
 		while_cond = result.register(self.build_logical_ast())
 		if result.error: return result
+		# Next keyword after condition is 'then'
 		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[8]): # then
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected 'do'"))
+		# Advance past 'then' keyword
 		result.register_advancement()
 		self.advance()
+		# Loop expression is a sub-program
 		loop_expr = result.register(self.build_var_ast())
 		if result.error: return result
+		# Whileloop must end if 'endwhile' keyword
 		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[11]): # endwhile
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected 'endwhile'"))
+		# Advance past 'endwhile' keyword
 		result.register_advancement()
 		self.advance()
 		return result.success(WhileLoopNode(while_cond, loop_expr))
 
 	def build_decl_func_ast(self):
 		result = ParseResult()
+		# Advance past 'def' keyword
 		result.register_advancement()
 		self.advance()
+		# Next token must be identifier for the function
 		if self.cur_token.type != TT_ID:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected identifier"))
-		func_name = self.cur_token
+		func_name = self.cur_token # Token
+		# Advance past function's identifier
 		result.register_advancement()
 		self.advance()
+		# Next token must be an open parenthesis
 		if self.cur_token.type != TT_L_PAREN:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected '('"))
+		# Advance past open parenthesis
 		result.register_advancement()
 		self.advance()
+		# Parse through sequence of parameters including closing parenthesis
 		params = []
 		while self.cur_token.type == TT_ID:
-			params.append(self.cur_token)
+			# Parameters are variables without values initialized
+			params.append(VarAssignNode(self.cur_token))
+			# Advance past the parameter
 			result.register_advancement()
 			self.advance()
+			# This is the case where there is only one parameter.
+			# Just check that the next token is a closing parenthesis
+			# and exit the loop.
 			if self.cur_token.type == TT_R_PAREN: break
+			# If there are more than one parameter, the token after
+			# the parameter must be a comma.
 			if self.cur_token.type != TT_COMMA:
 				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 					self.cur_token.end_pos, 
 					"Expected ','"))
+			# Adance past comma
 			result.register_advancement()
 			self.advance()
+		# This case is used to make sure a function declaration with no parameters
+		# have a closing parenthesis or when the loop above is done parsing the
+		# parameters.
 		if self.cur_token.type != TT_R_PAREN:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected ')'"))
+		# Advance past closing parenthesis
 		result.register_advancement()
 		self.advance()
+		# Body of function must be wrapped around curly brackets
 		if self.cur_token.type != TT_L_C_BRACK:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected '{'"))
+		# Advance past open bracket
 		result.register_advancement()
 		self.advance()
+		# Functions are sub-programs so they can be anything
 		func_ast = result.register(self.build_var_ast())
 		if result.error: return result
+		# Check for closing brackets
 		if self.cur_token.type != TT_R_C_BRACK:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected '}'"))
+		# Advance past closing bracket
 		result.register_advancement()
 		self.advance()
 		return result.success(FuncDeclNode(func_name, params, func_ast))
 
 	def build_func_call_ast(self, func_name):
 		result = ParseResult()
+		# Adances past open parenthesis
 		result.register_advancement()
 		self.advance()
-		# parse through all the arguments.
+		# Parse through all the arguments
 		args = []
 		while self.cur_token.type != TT_COMMA:
 			if self.cur_token.type == TT_R_PAREN: break
+			# Arguments can be any type of expressions except variable
+			# declaration
 			arg = result.register(self.build_logical_ast())
 			if result.error: return result
 			args.append(arg)
@@ -463,9 +506,18 @@ class Parser:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected ')'"))
+		# Advances past close parenthesis
 		result.register_advancement()
 		self.advance()
-		return result.success(FuncCallNode(func_name, args))
+		# Build function call node
+		func_call_ast = result.success(FuncCallNode(func_name, args))
+		# If there is another open parenthesis, build the next function
+		# call for it
+		if self.cur_token.type == TT_L_PAREN:
+			next_func_call_ast = result.register(self.build_func_call_ast(func_name))
+			if result.error: return result
+			func_call_ast.next_call = next_func_call_ast
+		return result.success(func_call_ast)
 
 
 

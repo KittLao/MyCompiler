@@ -46,7 +46,7 @@ while_loop -> 'while' or_expr 'then' var^* 'endwhile'
 
 decl_func -> 'def' ID '(' arg_seq ')' '{' var^* '}'
 
-call_func -> ID '(' seq ')'
+call_func -> ID ('(' seq ')')^+
 
 arg_seq -> (ID (',' ID)^*)?
 
