@@ -149,14 +149,12 @@ class Evaluator:
 	def eval_VarAssignNode(self, node, context):
 		result = EvaluateResult()
 		var_name = node.var_name.value
-		# print("var assign " + var_name)
 		if context.func_env.exists(var_name):
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"'{var_name}' is already declared as a function", context))
 		var_value = result.register(self.eval(node.expr_assign, context))
 		if result.error: return result
 		context.env.set(var_name, var_value)
-		# print("After updating context: ", context.env.symbols)
 		return result.success(var_value)
 
 	def eval_ConditionalNode(self, node, context):
@@ -165,8 +163,8 @@ class Evaluator:
 		if_cond = result.register(self.eval(node.if_cond, context))
 		if result.error: return result
 		# Build new context for the scope of the expression.
-		child_context = Context(context.display_name, context.env,
-								context.func_env, context,
+		child_context = Context(context.display_name, Environment(context.env),
+								FunctionEnvironment(context.func_env), context,
 								node.start_pos)
 		# If condition is true, evaluate the if expression and just return the value
 		if if_cond.value:
@@ -204,8 +202,8 @@ class Evaluator:
 			return result.failure(RunTimeError(final_val.start_pos,
 				final_val.end_pos, f"Exptecing int", context))
 		# Build new context for the loop scope and allow iterator to within bounds
-		child_context = Context(context.display_name, context.env,
-								context.func_env, context,
+		child_context = Context(context.display_name, Environment(context.env),
+								FunctionEnvironment(context.func_env), context,
 								node.start_pos)
 		child_context.env.set(node.var_name.value, init_val)
 		# Evaluate the expression iteratively
@@ -226,8 +224,8 @@ class Evaluator:
 		while_cond = result.register(self.eval(node.while_cond, context))
 		if result.error: return result
 		# Build new context for the loop scope
-		child_context = Context(context.display_name, context.env,
-								context.func_env, context,
+		child_context = Context(context.display_name, Environment(context.env),
+								FunctionEnvironment(context.func_env), context,
 								node.start_pos)
 		# Keep evaluating the exxpression of the loop while the condition is
 		# true.
@@ -246,6 +244,7 @@ class Evaluator:
 		Function undefined
 		Invalid number of arguments
 		Function name already exists as variable
+		Return value not callable
 	"""
 
 	def eval_FuncDeclNode(self, node, context):
@@ -279,44 +278,47 @@ class Evaluator:
 		if not func_value:
 			return result.failure(RunTimeError(node.start_pos,
 				node.end_pos, f"'{func_name}' function is not defined", context))
-		# Retreive the functions declared name
+		# Retreive the functions declared name, used for tracing and debuggin
 		func_name = func_value.get_declared_name() # string
-		func_node = func_value.value # FuncDeclNode
-		args = node.args # [Node]
-		func_expr = func_node.func_expr # Node
-		params = func_node.params # [VarAssign]
-		# Number of arguments and parameters need to match.
-		if len(args) != len(params):
-			return result.failure(RunTimeError(node.start_pos,
-				node.end_pos, f"Invalid number of arguments", context))
-		# The relative context is basically the context where the function
-		# being called was declared.
-		relative_context = func_value.relative_context
-		# Declare a new context for the function using the relative context
-		child_context = Context(func_name, relative_context.env, 
-								relative_context.func_env,
-								relative_context, node.start_pos)
-		# Bind all arguments to the parameters.
-		for param, arg in list(zip(params, args)):
-			# Finish initializing the var VarAssignNode
-			param.expr_assign = arg
-			param.end_pos = arg.end_pos
-			# Interpret the variable inside the funciton's environment
-			param_val = result.register(self.eval_VarAssignNode(param, child_context))
-			if result.error: return result
-		# Evaluate the function expression.
-		return_val = result.register(self.eval(func_expr, child_context))
-		if result.error: return result
-		# For sequential calls, evaluate each call by using the returned value
-		# of a preivous call as 
-		if node.next_call:
-			if not isinstance(return_val, FunctionValue):
+		# For every function call, bind all arguments to the function's
+		# paremeters and evaluate the function's body expression. The 
+		# intial body expression is from the funtion's identifier, while
+		# the rest are from the return values of the previous function
+		# call.
+		args_seq = node.args_seq # [[Node]]
+		for args in args_seq:
+			# Make sure next call is a function if still calling.
+			if not isinstance(func_value, FunctionValue):
 				return result.failure(RunTimeError(node.start_pos,
-					node.end_pos, f"'{func_name}' declared as variable", context))
-			return_val = result.register(self.eval_FuncCallNode(node.next_call, context))
+					node.end_pos, f"{func_call_name} not callable", context))
+			func_node = func_value.value # FuncDeclNode
+			func_expr = func_node.func_expr # Node
+			params = func_node.params # [VarAssign]
+			# Number of arguments and parameters need to match.
+			if len(args) != len(params):
+				return result.failure(RunTimeError(node.start_pos,
+					node.end_pos, f"Invalid number of arguments", context))
+			# The relative context is basically the context where the function
+			# being called was declared.
+			relative_context = func_value.relative_context
+			# Declare a new context for funciton being evaluated. The function's
+			# The context of the function's body is the child of the context for
+			# where the function is declared. The function's body also includes
+			# what's declared inside the function, and the parameters.
+			child_context = Context(func_name, Environment(relative_context.env),
+									FunctionEnvironment(relative_context.func_env), relative_context,
+									node.start_pos)
+			# Bind all arguments to the parameters.
+			for param, arg in list(zip(params, args)):
+				param_name = param.var_name.value
+				# Evaluating the argumetns should  be done using the context
+				# for where the expression is declared.
+				param_value = result.register(self.eval(arg, context))
+				if result.error: return result
+				child_context.env.set(param_name, param_value)
+			func_value = result.register(self.eval(func_expr, child_context))
 			if result.error: return result
-			return result.success(return_val.set_pos(node.start_pos, node.end_pos))
-		return result.success(return_val.set_pos(node.start_pos, node.end_pos))
+		return result.success(func_value.set_pos(node.start_pos, node.end_pos))
 		
 
 

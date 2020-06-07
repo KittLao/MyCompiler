@@ -253,7 +253,6 @@ class Parser:
 				# Case where a function is being called
 				func_call_ast = result.register(self.build_func_call_ast(token))
 				if result.error: return result
-
 				token = self.cur_token
 				# Case for function call being raised to a power
 				if token.type == TT_EXP:
@@ -487,37 +486,37 @@ class Parser:
 
 	def build_func_call_ast(self, func_name):
 		result = ParseResult()
-		# Adances past open parenthesis
-		result.register_advancement()
-		self.advance()
-		# Parse through all the arguments
-		args = []
-		while self.cur_token.type != TT_COMMA:
-			if self.cur_token.type == TT_R_PAREN: break
-			# Arguments can be any type of expressions except variable
-			# declaration
-			arg = result.register(self.build_logical_ast())
-			if result.error: return result
-			args.append(arg)
-			if self.cur_token.type == TT_COMMA:
-				result.register_advancement()
-				self.advance()
-		if self.cur_token.type != TT_R_PAREN:
-			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
-				self.cur_token.end_pos, 
-				"Expected ')'"))
-		# Advances past close parenthesis
-		result.register_advancement()
-		self.advance()
-		# Build function call node
-		func_call_ast = result.success(FuncCallNode(func_name, args))
-		# If there is another open parenthesis, build the next function
-		# call for it
-		if self.cur_token.type == TT_L_PAREN:
-			next_func_call_ast = result.register(self.build_func_call_ast(func_name))
-			if result.error: return result
-			func_call_ast.next_call = next_func_call_ast
-		return result.success(func_call_ast)
+		args_seq = [] # [[VarAssignNode]]
+		# Everything in the while loop builds parses the arguments of one function call.
+		while self.cur_token.type == TT_L_PAREN:
+			# Adances past open parenthesis
+			result.register_advancement()
+			self.advance()
+			# Parse through all the arguments
+			args = [] # [VarAssignNode]
+			# Parses through each argument while taking into accound cases
+			# like no arguments, single argument, multiple argument, commas
+			# at the right places, and parenthesis in the right places.
+			while self.cur_token.type != TT_COMMA:
+				if self.cur_token.type == TT_R_PAREN: break
+				# Arguments can be any type of expressions except variable
+				# declaration
+				arg = result.register(self.build_logical_ast())
+				if result.error: return result
+				args.append(arg)
+				if self.cur_token.type == TT_COMMA:
+					# Skips comma tokens
+					result.register_advancement()
+					self.advance()
+			if self.cur_token.type != TT_R_PAREN:
+				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+					self.cur_token.end_pos, 
+					"Expected ')'"))
+			# Advances past close parenthesis
+			result.register_advancement()
+			self.advance()
+			args_seq.append(args)
+		return result.success(FuncCallNode(func_name, args_seq))
 
 
 

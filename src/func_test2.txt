@@ -1,0 +1,5 @@
+def f(x, y) {(x^2 + y^2)/(x + y)}
+var x = 3
+f(x, 2)
+var y = f(2, 4)
+var z = f(f(3, 4) x)

@@ -143,20 +143,22 @@ class FuncDeclNode:
 		func_repr += f"{self.func_expr}" + "\n}" 
 		return func_repr
 
-# :Token: -> :[Node]:
+# :Token: -> :[[Node]]:
 class FuncCallNode:
-	def __init__(self, func_name, args):
+	def __init__(self, func_name, args_seq):
 		self.func_name = func_name
-		self.args = args
+		self.args_seq = args_seq
 		self.start_pos = func_name.start_pos
-		self.end_pos = func_name.end_pos if args == [] else args[len(args)-1].end_pos
-		self.next_call = None
+		last_call = args_seq[len(args_seq) - 1] # Has to have atleast one sequence of arguments
+		self.end_pos = func_name.end_pos if last_call == [] else last_call[len(last_call)-1].end_pos
 
 	def __repr__(self):
-		call_repr = f"{self.func_name}("
-		for i in range(len(self.args)):
-			call_repr += f"{self.args[i]}" if i == 0 else f", {self.args[i]}"
-		call_repr += ')'
+		call_repr = f"{self.func_name}"
+		for args in self.args_seq:
+			call_repr += '('
+			for i in range(len(args)):
+				call_repr += f"{args[i]}" if i == 0 else f", {args[i]}"
+			call_repr += ')'
 		return call_repr
 
 

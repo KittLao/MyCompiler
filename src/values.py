@@ -130,6 +130,7 @@ class Value(Primitives):
 		return None, RunTimeError(other.start_pos, other.end_pos,
 					"Requires 'Value' type", self.context)
 
+# :FunctionNode: -> :Context:
 class FunctionValue(Primitives):
 	def __init__(self, func_node, context):
 		Primitives.__init__(self, func_node)
