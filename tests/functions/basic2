@@ -1,0 +1,7 @@
+Input:
+def f(n) {2 * n + 5}
+var x = 2 
+f(x)
+
+Output:
+9

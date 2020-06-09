@@ -277,7 +277,7 @@ class Evaluator:
 		# Function needs to be defined.
 		if not func_value:
 			return result.failure(RunTimeError(node.start_pos,
-				node.end_pos, f"'{func_name}' function is not defined", context))
+				node.end_pos, f"'{func_call_name}' function is not defined", context))
 		# Retreive the functions declared name, used for tracing and debuggin
 		func_name = func_value.get_declared_name() # string
 		# For every function call, bind all arguments to the function's
@@ -285,15 +285,14 @@ class Evaluator:
 		# intial body expression is from the funtion's identifier, while
 		# the rest are from the return values of the previous function
 		# call.
-		args_seq = node.args_seq # [[Node]]
-		for args in args_seq:
+		for args in node.args_seq: # [[Node]]
 			# Make sure next call is a function if still calling.
 			if not isinstance(func_value, FunctionValue):
 				return result.failure(RunTimeError(node.start_pos,
 					node.end_pos, f"{func_call_name} not callable", context))
 			func_node = func_value.value # FuncDeclNode
 			func_expr = func_node.func_expr # Node
-			params = func_node.params # [VarAssign]
+			params = func_node.params # [VarAssignNode]
 			# Number of arguments and parameters need to match.
 			if len(args) != len(params):
 				return result.failure(RunTimeError(node.start_pos,
@@ -306,14 +305,14 @@ class Evaluator:
 			# where the function is declared. The function's body also includes
 			# what's declared inside the function, and the parameters.
 			child_context = Context(func_name, Environment(relative_context.env),
-									FunctionEnvironment(relative_context.func_env), relative_context,
-									node.start_pos)
+									FunctionEnvironment(relative_context.func_env),
+									relative_context, node.start_pos)
 			# Bind all arguments to the parameters.
-			for param, arg in list(zip(params, args)):
+			for param, arg in list(zip(params, args)): # [(VarAssignNode, Node)]
 				param_name = param.var_name.value
 				# Evaluating the argumetns should  be done using the context
 				# for where the expression is declared.
-				param_value = result.register(self.eval(arg, context))
+				param_value = result.register(self.eval(arg, context)) # Value
 				if result.error: return result
 				child_context.env.set(param_name, param_value)
 			func_value = result.register(self.eval(func_expr, child_context))

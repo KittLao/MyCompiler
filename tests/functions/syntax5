@@ -1,0 +1,11 @@
+Input:
+def test_func(a, b, c) {a + b + c}
+test_func(2, 3)
+
+Output:
+Traceback (most recent call last):
+File <stdin>, line 1, in <program>
+RunTime error: Invalid number of arguments 
+
+test_func(2, 3)
+         ^^^^

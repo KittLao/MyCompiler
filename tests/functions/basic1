@@ -1,0 +1,6 @@
+Input:
+def f() {True}
+f()
+
+Output:
+True

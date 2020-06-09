@@ -1,0 +1,9 @@
+Input:
+def f(a) {def g(b, c) {def h(d, e, f) {5}}}
+f(2)(1, 3, 4)(1, 2, 3)
+
+Output:
+Invalid syntax: Expected identifier File <stdin>, line 1
+
+test_func(1, 2, 3,)
+    

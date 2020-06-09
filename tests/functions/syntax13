@@ -1,0 +1,16 @@
+Input:
+def f(a) {
+	def g(b, c) {
+		def h(d, e, f) {
+			5
+		}
+	}
+}
+
+f(1)(2, 3)(4, 5, 6,)
+
+Output:
+Invalid syntax: Expected identifier File <stdin>, line 1
+
+f(1)(2, 3)(4, 5, 6,)
+      

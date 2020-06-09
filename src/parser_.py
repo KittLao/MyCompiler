@@ -434,25 +434,51 @@ class Parser:
 		self.advance()
 		# Parse through sequence of parameters including closing parenthesis
 		params = []
-		while self.cur_token.type == TT_ID:
-			# Parameters are variables without values initialized
+
+		while self.cur_token.type != TT_R_PAREN:
+			# Arguments can be any type of expressions except variable
+			# declaration.
+			if self.cur_token.type != TT_ID:
+				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+					self.cur_token.end_pos, 
+					"Expected identifier"))
 			params.append(VarAssignNode(self.cur_token))
 			# Advance past the parameter
 			result.register_advancement()
 			self.advance()
-			# This is the case where there is only one parameter.
-			# Just check that the next token is a closing parenthesis
-			# and exit the loop.
-			if self.cur_token.type == TT_R_PAREN: break
-			# If there are more than one parameter, the token after
-			# the parameter must be a comma.
-			if self.cur_token.type != TT_COMMA:
+			if self.cur_token.type == TT_COMMA:
+				result.register_advancement()
+				self.advance()
+				if self.cur_token.type == TT_R_PAREN:
+					return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+						self.cur_token.end_pos, 
+						"Expected identifier"))
+			elif self.cur_token.type == TT_R_PAREN:
+				break
+			else:
 				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 					self.cur_token.end_pos, 
-					"Expected ','"))
-			# Adance past comma
-			result.register_advancement()
-			self.advance()
+					"Expected ')'"))
+
+		# while self.cur_token.type == TT_ID:
+		# 	# Parameters are variables without values initialized
+		# 	params.append(VarAssignNode(self.cur_token))
+		# 	# Advance past the parameter
+		# 	result.register_advancement()
+		# 	self.advance()
+		# 	# This is the case where there is only one parameter.
+		# 	# Just check that the next token is a closing parenthesis
+		# 	# and exit the loop.
+		# 	if self.cur_token.type == TT_R_PAREN: break
+		# 	# If there are more than one parameter, the token after
+		# 	# the parameter must be a comma.
+		# 	if self.cur_token.type != TT_COMMA:
+		# 		return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+		# 			self.cur_token.end_pos, 
+		# 			"Expected ','"))
+		# 	# Adance past comma
+		# 	result.register_advancement()
+		# 	self.advance()
 		# This case is used to make sure a function declaration with no parameters
 		# have a closing parenthesis or when the loop above is done parsing the
 		# parameters.
@@ -497,17 +523,37 @@ class Parser:
 			# Parses through each argument while taking into accound cases
 			# like no arguments, single argument, multiple argument, commas
 			# at the right places, and parenthesis in the right places.
-			while self.cur_token.type != TT_COMMA:
-				if self.cur_token.type == TT_R_PAREN: break
+			while self.cur_token.type != TT_R_PAREN:
 				# Arguments can be any type of expressions except variable
-				# declaration
+				# declaration.
 				arg = result.register(self.build_logical_ast())
 				if result.error: return result
 				args.append(arg)
 				if self.cur_token.type == TT_COMMA:
-					# Skips comma tokens
 					result.register_advancement()
 					self.advance()
+					if self.cur_token.type == TT_R_PAREN:
+						return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+							self.cur_token.end_pos, 
+							"Expected identifier"))
+				elif self.cur_token.type == TT_R_PAREN:
+					break
+				else:
+					return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+						self.cur_token.end_pos, 
+						"Expected ')'"))
+
+			# while self.cur_token.type != TT_COMMA:
+			# 	if self.cur_token.type == TT_R_PAREN: break
+			# 	# Arguments can be any type of expressions except variable
+			# 	# declaration
+			# 	arg = result.register(self.build_logical_ast())
+			# 	if result.error: return result
+			# 	args.append(arg)
+			# 	if self.cur_token.type == TT_COMMA:
+			# 		# Skips comma tokens
+			# 		result.register_advancement()
+			# 		self.advance()
 			if self.cur_token.type != TT_R_PAREN:
 				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 					self.cur_token.end_pos, 

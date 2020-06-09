@@ -1,0 +1,6 @@
+Input:
+def f() {5}
+f()
+
+Output:
+5

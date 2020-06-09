@@ -1,0 +1,15 @@
+Input:
+def divisible_by_in_range(x, y, n, c) {
+	for var i = x to y do 
+		if i % n == 0 then 
+			var c = c + 1 
+		else 
+			var c = c 
+		endif 
+	endfor
+}
+
+var divisible_by_7_count = divisible_by_in_range(0, 1024, 7, 0)
+
+Output:
+147

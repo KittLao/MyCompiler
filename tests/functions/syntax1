@@ -1,0 +1,8 @@
+Input:
+def test?func'() {5}
+
+Output:
+Illegal symbol: '?' File <stdin>, line 1
+
+def test?func'() {5}
+   

@@ -1,0 +1,10 @@
+Input:
+def test_func(a, b, c d) {5}
+
+Output:
+Invalid syntax: Expected ')' File <stdin>, line 1
+
+def test_func(a, b, c d) {5}
+      
+     
+   

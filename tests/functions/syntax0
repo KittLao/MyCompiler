@@ -1,0 +1,8 @@
+Input:
+def 8test_func() {5}
+
+Output:
+Invalid syntax: Expected identifier File <stdin>, line 1
+
+def 8test_func() {5}
+     

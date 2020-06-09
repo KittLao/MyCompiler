@@ -1,0 +1,8 @@
+Input:
+def f(a, b, c) {(2 * (a + b))/(c ^ 2 - 1) % 12} 
+var x = 4
+var y = 7
+var z = f(x, y, 5)
+
+Output:
+0.9166666666666666

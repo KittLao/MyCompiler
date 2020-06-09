@@ -1,0 +1,11 @@
+Input:
+def sum_up_to(x, y, s) {
+	while x < y do 
+		var s = s + (var x = x + 1) 
+	endwhile
+}
+
+var up_to_100 = sum_up_to(0, 100, 0)
+
+Output:
+5050
