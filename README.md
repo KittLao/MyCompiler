@@ -1,5 +1,8 @@
 # MyCompiler
 
+Developer(s): 
+	Kit Lao, kittianlao@gmai.com, https://www.linkedin.com/feed/
+
 All of this is done in Python 3.
 
 This isn't really a 'compiler' since I don't implement stuff like memory management, 
