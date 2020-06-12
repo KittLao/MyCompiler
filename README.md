@@ -1,7 +1,7 @@
 # MyCompiler
 
 Developer(s): 
-	Kit Lao, kittianlao@gmai.com, https://www.linkedin.com/feed/
+	Kit Lao, kittianlao@gmai.com, https://www.linkedin.com/in/kit-lao-66a9751a4/
 
 All of this is done in Python 3.
 
