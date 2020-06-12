@@ -1,0 +1,28 @@
+This test shows that functions can be passed around as values. Also tests
+that the identifiers from the parameters and variables declared locally
+will map to different results. This maintains the integrity of the scope
+of each function.
+
+Input:
+def g(val) {(val^2 + val^3)/(2*val + 1)}
+
+def f(x, y, z) {z(x) + z(y) + h(x, y)}
+
+def h(a, b) {if a < b then a else b endif}
+
+def func1(x) {
+	def func2(y) {
+		def func3() {
+			f(x, y, g)
+		}
+	}
+}
+
+var x = func1
+var y = x(2)
+var z = y(4)
+var result = z()
+result
+
+Output:
+13.28888888888889

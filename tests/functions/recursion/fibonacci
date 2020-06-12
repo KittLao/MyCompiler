@@ -1,0 +1,13 @@
+The purpose of testing a recursive problem with multiple recursive calls
+is to make sure the recursive call isn't dynamically changing the parameter
+value 'n' from the previous recursive call. If it was changing it, then the
+second recursive call will not recurse because the value of 'n' is already
+reduced to it's base case from the first recursive call.
+
+Input:
+def fib(n) {if n <=2 then 1 else fib(n-1) + fib(n-2) endif}
+var fib_8 = fib(8)
+fib_8
+
+Output:
+21

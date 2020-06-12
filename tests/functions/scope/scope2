@@ -1,0 +1,14 @@
+Functions inside functions cannot be accessed outside
+of the functions
+
+Input:
+def f(n) {def g(m) {n + m}}
+g(3)
+
+Output:
+Traceback (most recent call last):
+File <stdin>, line 1, in <program>
+RunTime error: 'g' function is not defined 
+
+g(3)
+ ^

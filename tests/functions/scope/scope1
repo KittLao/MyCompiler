@@ -1,0 +1,15 @@
+Parameters declared inside functions cannot be access outside of
+the functions
+
+Input:
+def f(n, m) {n + m}
+var x = f(2, 3)
+n
+
+Output:
+Traceback (most recent call last):
+File <stdin>, line 1, in <program>
+RunTime error: 'n' is not defined 
+
+n
+ 

@@ -1,0 +1,22 @@
+Same as HOF0 except this will test that I can reuse a a function by 
+passing it different arguments from what it was originally passed in
+to get a different result.
+
+Input:
+def func1(a) {
+	def func2(b, c) {
+		def func3(d, e, f) {
+			a * (b + c) * (d + e + f)
+		}
+	}
+}
+
+var call_func1 = func1
+var call_func2 = call_func1(1)
+var call_func3 = call_func2(2, 4)
+call_func3(2, 2, 2)
+call_func3(1, 1, 1)
+
+Output:
+36
+18

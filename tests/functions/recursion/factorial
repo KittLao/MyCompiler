@@ -1,0 +1,9 @@
+Pretty straight forward, function name needs to exists within the function.
+
+Input:
+def fact(n) {if n <= 0 then 1 else n * fact(n-1) endif}
+var fact_6 = fact(fact(3))
+fact_6
+
+Output:
+720

@@ -1,0 +1,21 @@
+Test basic HOF by making sure I can store functions as values, while being
+able to call them using different identifiers. The parameter values are
+also maintained within scope for each call
+
+Input:
+def func1(a) {
+	def func2(b, c) {
+		def func3(d, e, f) {
+			a * (b + c) * (d + e + f)
+		}
+	}
+}
+
+var call_func1 = func1
+var call_func2 = call_func1(1)
+var call_func3 = call_func2(2, 4)
+var result = call_func3(3, 2, 2)
+result
+
+Output:
+42

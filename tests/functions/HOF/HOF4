@@ -1,0 +1,21 @@
+Similar to HOF1, but I am now making sure that the parameter values will
+not be overriden by other identifiers using it. In this case, the variable
+'y' will not override the value '3' from 'x'
+
+Input:
+def func1(a) {
+	def func2(b, c) {
+		def func3(d, e, f) {
+			a * (b + c) * (d + e + f)
+		}
+	}
+}
+
+var x = func1(3)
+var y = func1(1)(4, 1)
+x(5, 4)(2, 2, 4)
+y(1, 1, 1)
+
+Output:
+216
+15

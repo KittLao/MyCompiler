@@ -1,8 +1,0 @@
-def g(val) {(val^2 + val^3)/(2*val + 1)}
-def f(x, y, z) {z(x) + z(y) + h(x, y)}
-def h(a, b) {if a < b then a else b endif}
-def func1(x) {def func2(y) {def func3() {f(x, y, g)}}}
-var call1 = func1
-var call2 = call1(2)
-var call3 = call2(4)
-var call4 = call3()

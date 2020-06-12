@@ -1,0 +1,21 @@
+Same as HOF5 but with sequential function calls
+
+Input:
+def g(val) {(val^2 + val^3)/(2*val + 1)}
+
+def f(x, y, z) {z(x) + z(y) + h(x, y)}
+
+def h(a, b) {if a < b then a else b endif}
+
+def func1(x) {
+	def func2(y) {
+		def func3() {
+			f(x, y, g)
+		}
+	}
+}
+
+func1(2)(4)()
+
+Output:
+13.28888888888889

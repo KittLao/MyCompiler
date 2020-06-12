@@ -1,6 +1,0 @@
-def f(x, y, z) {if x < y then x + z else y + z endif}
-def g(x) {x + 1}
-def h(x) {x - 1}
-var x = g(4)
-var y = var z = h(h(g(3)))
-var result = f(x, y, z)

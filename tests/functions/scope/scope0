@@ -1,0 +1,10 @@
+Functions can access variables from its parent scope
+
+Input:
+def f(n) {n + x + y}
+var x = 4
+var y = 5
+f(2)
+
+Output:
+11
