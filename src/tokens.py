@@ -63,6 +63,7 @@ WORD_OPERATOR = [
 ]
 
 class Token:
+	# :string: -> :{string, int, float, boolean}: -> :Position: -> :Position:
 	def __init__(self, type_, value=None, start_pos=None, end_pos=None):
 		self.type = type_ # :TT_:
 		self.value = value # :{string, int, float, boolean}:
@@ -76,9 +77,7 @@ class Token:
 	def __repr__(self):
 		return f"{self.type}" if self.value == None else f"{self.type}:{self.value}"
 
-	"""
-	:TT_: -> :{string, int, float}: -> :Boolean:
-	"""
+	# :TT_: -> :{string, int, float}: -> :Boolean:
 	def matches(self, type_, value):
 		return self.type == type_ and self.value == value
 

@@ -3,28 +3,31 @@ from errors import *
 from position import Position
 import string
 
-IRRELEVENT_SYMBOLS = " \n\t" # The shit that we ignore
+IRRELEVENT_SYMBOLS = " \t"
 DIGITS = "0123456789"
-LETTERS = string.ascii_letters
+LETTERS = string.ascii_letters # All the alphabets, lower and upper case
 LETTERS_DIGITS = LETTERS + DIGITS
 
 class Lexer:
-	"""
-	:string: -> :string:
-	"""
-	def __init__(self, file_name, text):
-		self.text = text
+	# :string: -> :string:
+	def __init__(self, file_name, lines):
+		self.lines = lines
 		self.file_name = file_name
-		self.pos = Position(-1, 0, -1, file_name, text)
+		self.pos = Position(-1, 0, -1, file_name, lines)
 		self.cur_symbol = None
 		self.advance()
 
 	def advance(self):
 		self.pos.advance(self.cur_symbol)
-		self.cur_symbol = self.text[self.pos.index] if self.pos.index < len(self.text) else None
+		next_symbol = None
+		if self.pos.line < len(self.lines):
+			if self.pos.column < len(self.lines[self.pos.line]):
+				next_symbol = self.lines[self.pos.line][self.pos.column]
+		self.cur_symbol = next_symbol
 
 	def generate_tokens(self):
-		tokens = []
+		all_tokens = [] # Tokens for entire file
+		tokens = [] # Tokens for a line
 		while self.cur_symbol != None:
 			if self.cur_symbol in IRRELEVENT_SYMBOLS:
 				self.advance()
@@ -69,14 +72,27 @@ class Lexer:
 				tokens.append(self.generate_compare(TT_GTE, TT_GT))
 			elif self.cur_symbol == ',':
 				tokens.append(Token(TT_COMMA, start_pos=self.pos))
-				self.advance()	
+				self.advance()
+			elif self.cur_symbol in ('\n', '#'):
+				# Store tokens for the previous line when new line appears.
+				# If there are no tokens for the new line, then do not append
+				# any empty lists. 
+				# The '#' is for comments on the code
+				if len(tokens) > 0:
+					all_tokens.append(tokens)
+				tokens = []
+				self.advance()
 			else:
 				pos_begin = self.pos.copy()
 				illegal_symbol = self.cur_symbol
 				self.advance()
 				return ([], IllegalSymbolError(pos_begin, self.pos, "'" + illegal_symbol + "'"))
-		tokens.append(Token(TT_EOF, start_pos=self.pos))
-		return (tokens, None)
+		# Edge case for when there isn't a new line at the end of the
+		# program.
+		if len(tokens) > 0:
+			all_tokens.append(tokens)
+		all_tokens.append([Token(TT_EOF, start_pos=self.pos)])
+		return (all_tokens, None)
 
 	def generate_number(self):
 		number_str = ""

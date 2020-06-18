@@ -38,22 +38,26 @@ class Evaluator:
 	def evaluate(self):
 		return self.eval(self.ast, self.context)
 
-	def eval(self, node, context):
-		"""
-		eval_BinaryOpNode
-		eval_UnaryOpNode
-		eval_NumberNode
-		eval_VarAccessNode
-		eval_VarAssignNode
-		eval_ConditionalNode
-		eval_ForLoopNode
-		eval_WhileLoopNode
-		eval_FuncDeclNode
-		eval_FuncCallNode
-		"""
-		method_name = f"eval_{type(node).__name__}"
-		method = getattr(self, method_name, self.eval_unknown)
-		return method(node, context)
+	def eval(self, nodes, context):
+		# eval_BinaryOpNode
+		# eval_UnaryOpNode
+		# eval_NumberNode
+		# eval_VarAccessNode
+		# eval_VarAssignNode
+		# eval_ConditionalNode
+		# eval_ForLoopNode
+		# eval_WhileLoopNode
+		# eval_FuncDeclNode
+		# eval_FuncCallNode
+		values = []
+		for node in nodes:
+			method_name = f"eval_{type(node).__name__}"
+			method = getattr(self, method_name, self.eval_unknown)
+			values.append(method(node, context))
+		return values
+		# method_name = f"eval_{type(node).__name__}"
+		# method = getattr(self, method_name, self.eval_unknown)
+		# return method(node, context)
 
 	"""
 	All evals type:

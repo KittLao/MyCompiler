@@ -7,9 +7,8 @@ class Position:
 		self.file_text = file_text
 
 	def advance(self, cur_symbol=None):
-		self.index += 1
 		self.column += 1
-		if cur_symbol == '\n':
+		if cur_symbol in ('\n', '#'):
 			self.column = 0
 			self.line += 1
 		return self

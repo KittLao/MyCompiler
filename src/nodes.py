@@ -1,3 +1,95 @@
+
+def repr_node(node, index=0):
+	node_type = type(node).__name__
+	if node_type == "NumberNode":
+		return repr_NumberNode(node, index)
+	elif node_type == "BinaryOpNode":
+		return repr_BinaryOpNode(node, index)
+	elif node_type == "UnaryOpNode":
+		return repr_UnaryOpNode(node, index)
+	elif node_type == "VarAssignNode":
+		return repr_VarAssignNode(node, index)
+	elif node_type == "VarAccessNode":
+		return repr_VarAccessNode(node, index)
+	elif node_type == "ConditionalNode":
+		return repr_ConditionalNode(node, index)
+	elif node_type == "ForLoopNode":
+		return repr_ForLoopNode(node, index)
+	elif node_type == "WhileLoopNode":
+		return repr_WhileLoopNode(node, index)
+	elif node_type == "FuncDeclNode":
+		return repr_FuncDeclNode(node, index)
+	elif node_type == "FuncCallNode":
+		return repr_FuncCallNode(node, index)
+	else:
+		return "bruhh"
+
+def repr_NumberNode(node, index=0):
+	return "    " * index + f"{node.token}"
+
+def repr_BinaryOpNode(node, index=0):
+	return "    " * index + f"( {node.left_node} {node.op_token} {node.right_node} )"
+
+def repr_UnaryOpNode(node, index=0):
+	return "    " * index + f"( {node.op_token} {node.node} )"
+
+def repr_VarAssignNode(node, index=0):
+	return "    " * index + f"( {node.var_name} = {node.expr_assign} )\n"
+
+def repr_VarAccessNode(node, index=0):
+	return f"{node.var_name}\n"
+
+def repr_ConditionalNode(node, index=0):
+	cond_repr = "    " * index + f"if {node.if_cond} " + " {\n"
+	for expr in node.if_expr:
+		cond_repr += repr_node(expr, index + 1)
+	cond_repr += "    " * index + "} "
+	for elif_cond, elif_expr in node.elif_conds_exprs:
+		cond_repr += f"elif {elif_cond}" + " {\n"
+		for expr in elif_expr:
+			cond_repr += repr_node(expr, index + 1)
+	cond_repr += "    " * index + "}"
+	if node.else_expr:
+		cond_repr += " else {\n"
+		for expr in node.else_expr:
+			cond_repr += repr_node(expr, index + 1)
+		cond_repr += "    " * index + "}\n"
+	return cond_repr
+
+def repr_ForLoopNode(node, index=0):
+	for_repr = "   " * index + f"for var {node.var_name} = {node.init_expr} to {node.final_expr} " + "{\n"
+	for expr in node.loop_expr:
+		for_repr += repr_node(expr, index + 1)
+	for_repr += "    " * index + "}\n"
+	return for_repr
+
+def repr_WhileLoopNode(node, index=0):
+	while_repr = "    " * index + f"while {node.while_cond}" + " {\n"
+	for expr in node.loop_expr:
+		while_repr += repr_node(expr, index + 1)
+	while_repr += "    " * index + "}\n"
+	return while_repr
+
+def repr_FuncDeclNode(node, index=0):
+	func_repr = "    " * index + f"def {node.func_name} ("
+	for i in range(len(node.params)):
+		func_repr += f"{node.params[i]}" if i == 0 else f", {node.params[i]}"
+	func_repr += ") {\n"
+	for expr in node.func_expr:
+		func_repr += repr_node(expr, index + 1)
+	func_repr += "    " * index + "}\n"
+	return func_repr
+
+
+def repr_FuncCallNode(node, index=0):
+	call_repr = "    " * index + f"{node.func_name}"
+	for args in node.args_seq:
+		call_repr += '('
+		for i in range(len(args)):
+			call_repr += f"{args[i]}" if i == 0 else f", {args[i]}"
+		call_repr += ')'
+	return call_repr
+
 """
 Numbers
 """
@@ -9,7 +101,7 @@ class NumberNode:
 		self.end_pos = token.end_pos
 
 	def __repr__(self):
-		return f"{self.token}"
+		return repr_node(self, 0)
 
 """
 Operations
@@ -25,7 +117,7 @@ class BinaryOpNode:
 		self.end_pos = right_node.end_pos
 
 	def __repr__(self):
-		return f"({self.left_node} {self.op_token} {self.right_node})"
+		return repr_node(self, 0)
 
 # :Token: -> :Node:
 class UnaryOpNode:
@@ -36,7 +128,7 @@ class UnaryOpNode:
 		self.end_pos = node.end_pos
 
 	def __repr__(self):
-		return f"({self.op_token} {self.node})"
+		return repr_node(self, 0)
 
 """
 Variables
@@ -51,7 +143,7 @@ class VarAssignNode:
 		self.end_pos = expr_assign.end_pos if expr_assign else None
 
 	def __repr__(self):
-		return f"({self.var_name} = {self.expr_assign})"
+		return repr_node(self, 0)
 
 # :Token:
 class VarAccessNode:
@@ -61,7 +153,7 @@ class VarAccessNode:
 		self.end_pos = var_name.end_pos
 
 	def __repr__(self):
-		return f"{self.var_name}"
+		return repr_node(self, 0)
 
 """
 conditional statements
@@ -76,27 +168,22 @@ class ConditionalNode:
 		self.else_expr = else_expr
 		self.start_pos = if_cond.start_pos
 		if else_expr:
-			self.end_pos = else_expr.end_pos
+			self.end_pos = else_expr[len(else_expr) - 1].end_pos
 		elif elif_conds_exprs:
-			self.end_pos = elif_conds_exprs[len(elif_conds_exprs) - 1][1].end_pos
+			last_elif_expr = elif_conds_exprs[len(elif_conds_exprs) - 1][1]
+			self.end_pos = last_elif_expr[len(last_elif_expr) - 1].end_pos
 		else:
-			self.end_pos = if_expr.end_pos
+			self.end_pos = if_expr[len(if_expr) - 1].end_pos
 
 	def __repr__(self):
-		cond_repr = f"if {self.if_cond} then\n\t{self.if_expr}\n"
-		for elif_cond, elif_expr in self.elif_conds_exprs:
-			cond_repr += f"elif {elif_cond} then\n\t{elif_expr}\n"
-		if self.else_expr:
-			cond_repr += f"else\n\t{self.else_expr}\n"
-		cond_repr += "endif"
-		return cond_repr
+		return repr_node(self, 0)
 
 
 """
 Loops
 """
 
-# :string: :Node: -> :Node: -> :Node:
+# :string: :Node: -> :Node: -> :[Node]:
 class ForLoopNode:
 	def __init__(self, var_name, init_expr, final_expr, loop_expr):
 		self.var_name = var_name
@@ -104,10 +191,10 @@ class ForLoopNode:
 		self.final_expr = final_expr
 		self.loop_expr = loop_expr
 		self.start_pos = init_expr.start_pos
-		self.end_pos = loop_expr.end_pos
+		self.end_pos = loop_expr[len(loop_expr) - 1].end_pos
 
 	def __repr__(self):
-		return f"for var {self.var_name} = {self.init_expr} to {self.final_expr} then\n\t{self.loop_expr}\nendfor\n"
+		return repr_node(self, 0)
 
 
 # :Node: -> :Node:
@@ -116,32 +203,27 @@ class WhileLoopNode:
 		self.while_cond = while_cond
 		self.loop_expr = loop_expr
 		self.start_pos = while_cond.start_pos
-		self.end_pos = loop_expr.end_pos
+		self.end_pos = loop_expr[len(loop_expr) - 1].end_pos
 
 	def __repr__(self):
-		return f"while {self.while_cond} then\n\t{self.loop_expr}\nendwhile\n"
+		return repr_node(self, 0)
 
 
 """
 Functions
 """
 
-# :Token: -> :[VarAssign]: -> :Node: 
+# :Token: -> :[VarAssign]: -> :[Node]: 
 class FuncDeclNode:
 	def __init__(self, func_name, params, func_expr):
 		self.func_name = func_name
 		self.params = params
 		self.func_expr = func_expr
 		self.start_pos = func_name.start_pos
-		self.end_pos = func_expr.end_pos
+		self.end_pos = func_expr[len(func_expr) - 1].end_pos
 
 	def __repr__(self):
-		func_repr = f"def {self.func_name}("
-		for i in range(len(self.params)):
-			func_repr += f"{self.params[i]}" if i == 0 else f", {self.params[i]}"
-		func_repr += ") {\n\t"
-		func_repr += f"{self.func_expr}" + "\n}" 
-		return func_repr
+		return repr_node(self, 0)
 
 # :Token: -> :[[Node]]:
 class FuncCallNode:
@@ -153,13 +235,7 @@ class FuncCallNode:
 		self.end_pos = func_name.end_pos if last_call == [] else last_call[len(last_call)-1].end_pos
 
 	def __repr__(self):
-		call_repr = f"{self.func_name}"
-		for args in self.args_seq:
-			call_repr += '('
-			for i in range(len(args)):
-				call_repr += f"{args[i]}" if i == 0 else f", {args[i]}"
-			call_repr += ')'
-		return call_repr
+		return repr_node(self, 0)
 
 
 

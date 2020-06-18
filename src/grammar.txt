@@ -1,21 +1,50 @@
+NOTES:
+Everything between single quotation key words or characters
+for the program. They are within the language.
+
+^* means 0 or more occurrences of something
+? means something can exist or not
+^+ means 1 or more occurrences of something
+
+
+
+# The program is a sequence of expressions
+
+program -> expression ^ *
+
+# Possible expressions the program can have
+
+expression -> var
+				| or_expr
+				| expr
+				| if_cond
+				| for_loop
+				| while_loop
+				| decl_func
+				| call_func
+
 var -> or_expr
 		| 'var' ID '=' or_expr
 		| 'var' ID '=' var
 
-or_expr -> and
+# Used for logical operations
+
+or_expr -> and_term
 		| or_expr 'or' and_term
 
 and_term -> compare
 		| and_term  'and' compare
 
 compare -> expr
-			| 'not'^* compare
+			| '!'^* compare
 			| compare '==' expr
 			| compare '/=' expr
 			| compare '>' expr
 			| compare '>=' expr
 			| compare '<' expr
 			| compare '<=' expr
+
+# Used for arithmetic operations
 
 expr -> term
 		| expr '+' term
@@ -29,24 +58,21 @@ factor -> atom
 			| '(' var ')'
 			| factor '^' factor
 
-atom = values
-		| if_cond
-		| for_loop
-		| while_loop
-		| decl_func
-		| call_func
+atom = INT | FLOAT | ID | True | False | call_func
 
-values -> INT | FLOAT | ID | True | False
+# Other types of expressions
 
-if_cond -> 'if' or_expr 'then' var^* ('elif' or_expr 'then' var^*)^* ('else' var^*)? 'endif'
+if_cond -> 'if' or_expr '{' program '}' (elif ' or_expr '{' program '}')^* (else {' program '}')^+
 
-for_loop -> 'for' 'var' ID '=' expr 'to' expr 'then' var^* 'endfor'
+for_loop -> 'for' 'var' ID '=' expr 'to' expr '{' program '}'
 
-while_loop -> 'while' or_expr 'then' var^* 'endwhile'
+while_loop -> 'while' or_expr '{' program '}'
 
-decl_func -> 'def' ID '(' arg_seq ')' '{' var^* '}'
+decl_func -> 'def' ID '(' arg_seq ')' '{' program '}'
 
 call_func -> ID ('(' seq ')')^+
+
+# Other stuff
 
 arg_seq -> (ID (',' ID)^*)?
 

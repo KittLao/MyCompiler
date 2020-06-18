@@ -10,7 +10,8 @@ class Error:
 	def as_string(self):
 		error_msg = f"{self.error_name}: {self.details} "
 		error_msg += f"File {self.pos_begin.file_name}, line {self.pos_begin.line + 1}"
-		error_msg += "\n\n" + string_with_arrows(self.pos_begin.file_text, self.pos_begin, self.pos_end)
+		error_line = self.pos_begin.file_text[self.pos_begin.line]
+		error_msg += "\n\n" + string_with_arrows(error_line, self.pos_begin, self.pos_end)
 		return error_msg
 
 """
