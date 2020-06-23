@@ -2,14 +2,32 @@
 # Testing comments
 # This is a comment
 
-def divisible_by_in_range(x, y, n, c) {
-	for var i = x to y { 
-		if i % n == 0 { 
-			var c = c + 1 
-		} else {
-			var c = c 
-		} 
+
+def f(a, b) {
+	var x = 0
+	var y = 0
+	var z = 0
+	for var i = a to b {
+		if i % 2 == 0 {
+			var x = x + 1
+		}
+		if i % 3 == 0 {
+			var y = y + 1
+		}
+		if i % 4 == 0 {
+			var z = z + 1
+		}
 	}
+	print(x, y, z)
+	var result = x + y + z
+	return result
 }
 
-var divisible_by_7_count = divisible_by_in_range(0, 1024, 7, 0)
+def main() {
+	var x = f(2, 70)
+	var y = f(5, 80)
+	print(x, y)
+	return None
+}
+
+main()

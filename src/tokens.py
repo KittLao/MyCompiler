@@ -38,17 +38,13 @@ List of keywords for program to help separate variable names from keywords
 KEYWORDS = [
 	"var", # 0
 	"if", # 1
-	"then", # 2
-	"elif", # 3
-	"else", # 4
-	"endif", # 5
-	"for", # 6
-	"to", # 7
-	"do", # 8
-	"endfor", # 9
-	"while", # 10
-	"endwhile", # 11
-	"def" # 12
+	"elif", # 2
+	"else", # 3
+	"for", # 4
+	"to", # 5
+	"while", # 6
+	"def", # 7
+	"return" # 8
 ]
 
 BOOLEANS = [

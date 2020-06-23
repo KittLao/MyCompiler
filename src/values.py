@@ -140,6 +140,37 @@ class FunctionValue(Primitives):
 		return self.value.func_name.value
 
 
+class BuiltInFunctionValue:
+	# my_print
+	# my_map
+	# my_filter
+	# my_reduce
+	def __init__(self, built_in_func):
+		self.built_in_func = built_in_func
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

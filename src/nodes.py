@@ -19,6 +19,8 @@ def repr_node(node, index=0):
 		return repr_WhileLoopNode(node, index)
 	elif node_type == "FuncDeclNode":
 		return repr_FuncDeclNode(node, index)
+	elif node_type == "ReturnNode":
+		return repr_ReturnNode(node, index)
 	elif node_type == "FuncCallNode":
 		return repr_FuncCallNode(node, index)
 	else:
@@ -80,6 +82,8 @@ def repr_FuncDeclNode(node, index=0):
 	func_repr += "    " * index + "}\n"
 	return func_repr
 
+def repr_ReturnNode(node, index=0):
+	return "    " * index + f"return {node.return_expr}\n"
 
 def repr_FuncCallNode(node, index=0):
 	call_repr = "    " * index + f"{node.func_name}"
@@ -221,6 +225,16 @@ class FuncDeclNode:
 		self.func_expr = func_expr
 		self.start_pos = func_name.start_pos
 		self.end_pos = func_expr[len(func_expr) - 1].end_pos
+
+	def __repr__(self):
+		return repr_node(self, 0)
+
+# :Node:
+class ReturnNode:
+	def __init__(self, return_expr):
+		self.return_expr = return_expr
+		self.start_pos = return_expr.start_pos
+		self.end_pos = return_expr.end_pos
 
 	def __repr__(self):
 		return repr_node(self, 0)

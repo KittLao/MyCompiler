@@ -5,19 +5,21 @@ from parser_ import Parser
 from evaluator import Evaluator
 from context import Context
 from environment import *
-from values import Value
+from values import *
+from BuiltInFunctions import *
 
+built_in_print = BuiltInFunctionValue(my_print)
 
+# Sets up built in values
 global_env = Environment()
-global_env.set("null", Value(0))
-global_func_env = FunctionEnvironment()
+global_env.set("None", Value(0))
+global_env.set("print", built_in_print)
 
-def display(sequence, index=0):
-	if type(sequence).__name__ == 'list':
-		for elem in sequence:
-			display(elem, index + 1)
-	else:
-		print(" "*index, sequence)
+# Sets up built in functions
+global_func_env = FunctionEnvironment()
+global_func_env.set("print", built_in_print)
+
+# Set up built in functions
 
 def interpret_stdin():
 	context = Context("<stdin>", global_env, global_func_env)
@@ -49,15 +51,23 @@ def interpret_program(program):
 	lexer = Lexer('<' + program + '>', lines)
 	tokens, errors = lexer.generate_tokens()
 	if errors == None:
-		print("Tokens: ")
-		for x in tokens:
-			print(x)
+		# print("Tokens: ")
+		# for x in tokens:
+		# 	print(x)
 		parser = Parser(tokens)
 		ast = parser.parse()
 		if ast.error == None:
-			print("AST's: ")
-			for x in ast.node:
-				print(x)
+			# print("AST's: ")
+			# for x in ast.node:
+			# 	print(x)
+			interpreter = Evaluator(ast.node, context)
+			values = interpreter.evaluate()
+			if values.error == None:
+				print("Values: ")
+				# for x in values.value:
+				# 	print(x)
+			else:
+				print(values.error.as_string())
 		else:
 			print(ast.error.as_string())
 	else:

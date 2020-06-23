@@ -30,9 +30,7 @@ class ParseResult:
 		if not self.error or self.advance_count == 0: self.error = error
 		return self
 
-"""
-Does actual parsing
-"""
+# Does actual parsing
 class Parser:
 	def __init__(self, tokens):
 		self.tokens = tokens # :[[Token]]:
@@ -78,18 +76,22 @@ class Parser:
 				cond_ast = result.register(self.build_conditional_ast())
 				if result.error: return result
 				all_ast.append(cond_ast)
-			elif token.matches(TT_KEYWORD, KEYWORDS[6]): # for
+			elif token.matches(TT_KEYWORD, KEYWORDS[4]): # for
 				forLoop_ast = result.register(self.build_forLoop_ast())
 				if result.error: return result
 				all_ast.append(forLoop_ast)
-			elif token.matches(TT_KEYWORD, KEYWORDS[10]): # while
+			elif token.matches(TT_KEYWORD, KEYWORDS[6]): # while
 				whileLoop_ast = result.register(self.build_whileLoop_ast())
 				if result.error: return result
 				all_ast.append(whileLoop_ast)
-			elif token.matches(TT_KEYWORD, KEYWORDS[12]): # def
+			elif token.matches(TT_KEYWORD, KEYWORDS[7]): # def
 				funcDecl_ast = result.register(self.build_decl_func_ast())
 				if result.error: return result
 				all_ast.append(funcDecl_ast)
+			elif token.matches(TT_KEYWORD, KEYWORDS[8]): # return
+				return_ast = result.register(self.build_return_ast())
+				if result.error: return result
+				all_ast.append(return_ast)
 			else:
 				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 					self.cur_token.end_pos, 
@@ -321,12 +323,17 @@ class Parser:
 		self.advance()		# Get all the expressions for the if statement
 		if_expr = result.register(self.parse_until(TT_R_C_BRACK)) # :[Parser]:
 		if result.error: return result
+		# Must have some expressions
+		if len(if_expr) < 1:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Missing expressions"))
 		# Advance past '}'
 		result.register_advancement()
 		self.advance()
 		# Parse elif statements if exists
 		elif_conds_exprs = [] # List of tuples of elif condition and elif expression
-		while self.cur_token.matches(TT_KEYWORD, KEYWORDS[3]): # elif
+		while self.cur_token.matches(TT_KEYWORD, KEYWORDS[2]): # elif
 			result.register_advancement()
 			self.advance()
 			elif_cond = result.register(self.build_logical_ast()) # Condition for elif
@@ -339,6 +346,11 @@ class Parser:
 			self.advance()
 			# Get all the expressions for the elif statement
 			elif_expr = result.register(self.parse_until(TT_R_C_BRACK)) # :[Parser]:
+			# Must have some expressions
+			if len(elif_expr) < 1:
+				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+					self.cur_token.end_pos, 
+					"Missing expressions"))
 			if result.error: return result
 			if self.cur_token.type != TT_R_C_BRACK:
 				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
@@ -351,7 +363,7 @@ class Parser:
 
 		# Parse else statement if exists.
 		else_expr = None
-		if self.cur_token.matches(TT_KEYWORD, KEYWORDS[4]): # else
+		if self.cur_token.matches(TT_KEYWORD, KEYWORDS[3]): # else
 			# Advance past 'else'
 			result.register_advancement()
 			self.advance()
@@ -364,7 +376,12 @@ class Parser:
 			self.advance()
 			else_expr = result.register(self.parse_until(TT_R_C_BRACK)) # :[Parser]:
 			if result.error: return result
-			if self.cur_token.type != TT_R_C_BRACK: # endif
+			# Must have some expressions
+			if len(else_expr) < 1:
+				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+					self.cur_token.end_pos, 
+					"Missing expressions"))
+			if self.cur_token.type != TT_R_C_BRACK:
 				return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 					self.cur_token.end_pos, 
 					"Expected '}'"))
@@ -398,7 +415,7 @@ class Parser:
 		self.advance()
 		init_expr = result.register(self.build_arith_ast())
 		if result.error: return result
-		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[7]): # to
+		if not self.cur_token.matches(TT_KEYWORD, KEYWORDS[5]): # to
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected 'to'"))
@@ -406,7 +423,7 @@ class Parser:
 		self.advance()
 		final_expr = result.register(self.build_arith_ast())
 		if result.error: return result
-		if self.cur_token.type != TT_L_C_BRACK: # then
+		if self.cur_token.type != TT_L_C_BRACK:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected '{'"))
@@ -415,7 +432,12 @@ class Parser:
 		self.advance()
 		loop_expr = result.register(self.parse_until(TT_R_C_BRACK))
 		if result.error: return result
-		if self.cur_token.type != TT_R_C_BRACK: # endif
+		# Must have some expressions
+		if len(loop_expr) < 1:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Missing expressions"))
+		if self.cur_token.type != TT_R_C_BRACK:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected '}'"))
@@ -432,8 +454,7 @@ class Parser:
 		# Loop condition can be anything except variable declaration
 		while_cond = result.register(self.build_logical_ast())
 		if result.error: return result
-
-		if self.cur_token.type != TT_L_C_BRACK: # then
+		if self.cur_token.type != TT_L_C_BRACK:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
 				"Expected '{'"))
@@ -442,7 +463,12 @@ class Parser:
 		self.advance()
 		# Loop expression is a sub-program
 		loop_expr = result.register(self.parse_until(TT_R_C_BRACK)) # :[Parser]:
-		if result.error: return 
+		if result.error: return result
+		# Must have some expressions
+		if len(loop_expr) < 1:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Missing expressions"))
 		if self.cur_token.type != TT_R_C_BRACK: # endif
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
 				self.cur_token.end_pos, 
@@ -476,7 +502,6 @@ class Parser:
 		self.advance()
 		# Parse through sequence of parameters including closing parenthesis
 		params = []
-
 		while self.cur_token.type != TT_R_PAREN:
 			# Arguments can be any type of expressions except variable
 			# declaration.
@@ -520,9 +545,18 @@ class Parser:
 		result.register_advancement()
 		self.advance()
 		# Functions are sub-programs so they can be anything
-		func_ast = result.register(self.parse_until(TT_R_C_BRACK)) # :[Parser]:
-		# func_ast = result.register(self.build_var_ast())
+		func_expr = result.register(self.parse_until(TT_R_C_BRACK)) # :[Parser]:
 		if result.error: return result
+		# Has to have some expressions inside body
+		if len(func_expr) < 1:
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Missing expressions"))
+		return_statement = func_expr[len(func_expr) - 1]
+		if type(return_statement).__name__ != "ReturnNode":
+			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
+				self.cur_token.end_pos, 
+				"Missing return statement"))
 		# Check for closing brackets
 		if self.cur_token.type != TT_R_C_BRACK:
 			return result.failure(InvalidSyntaxError(self.cur_token.start_pos, 
@@ -531,7 +565,16 @@ class Parser:
 		# Advance past closing bracket
 		result.register_advancement()
 		self.advance()
-		return result.success(FuncDeclNode(func_name, params, func_ast))
+		return result.success(FuncDeclNode(func_name, params, func_expr))
+
+	def build_return_ast(self):
+		result = ParseResult()
+		# Advance past 'return'
+		result.register_advancement()
+		self.advance()
+		return_expr = result.register(self.build_logical_ast())
+		if result.error: return result
+		return result.success(ReturnNode(return_expr))
 
 	def build_func_call_ast(self, func_name):
 		result = ParseResult()
