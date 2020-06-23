@@ -18,6 +18,7 @@ a bit of tye checking since there are a couple of primitives.
 My goal is to be able to grind leetcode in this lol.
 
 
-All the code is written from scratch. I used resources online and my knowledge from
-the compilers and comparative programming course from UCSC, when it was both taught
-by Professor Owen Arden.
+To use the langauge, read to MyCompiler documentation to get the syntax.
+Write the code in a .txt file. To run the code, run the command
+
+python MyCompiler.py ProgramName.txt
